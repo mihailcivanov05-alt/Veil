@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en" data-veil>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Veil — Companion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,450;14..32,550;14..32,620;14..32,720&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../design-system/tokens.css" />
+<link rel="stylesheet" href="../design-system/veil-ui.css" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(60% 42% at 78% 0%, rgba(23,216,97,0.10), transparent 70%),
+      radial-gradient(50% 30% at 0% 12%, rgba(23,216,97,0.05), transparent 70%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+  }
+  h1, h2, h3 { margin: 0; }
+  .muted { color: var(--text-muted); }
+  .faint { color: var(--text-faint); }
+  .between { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+
+  /* ---- master ---- */
+  .master-wrap { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); margin: var(--sp-5) 0 var(--sp-6); }
+  .master__label { font-size: var(--fs-title); font-weight: var(--fw-semibold); letter-spacing: -0.01em; margin-top: var(--sp-3); }
+  .master__status { font-size: var(--fs-caption); color: var(--text-faint); }
+  .master__status b { color: var(--accent); font-weight: var(--fw-medium); }
+  .master__status.is-paused b { color: var(--warning); }
+
+  /* ---- app panel ---- */
+  .panels.is-paused { opacity: 0.45; filter: saturate(0.4); transition: opacity var(--dur-base) var(--ease-out); }
+  .panel { padding: var(--sp-2) var(--sp-5) var(--sp-4); }
+  .panel + .panel { margin-top: var(--sp-4); }
+  .panel-head { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0 var(--sp-2); }
+  .panel-head__name { flex: 1; font-size: var(--fs-title); font-weight: var(--fw-semibold); letter-spacing: -0.01em; }
+  .brand {
+    width: 40px; height: 40px; flex-shrink: 0;
+    display: grid; place-items: center;
+    border-radius: var(--r-sm);
+    color: #fff;
+  }
+  .brand svg { width: 22px; height: 22px; }
+  .brand--ig { background: linear-gradient(135deg, rgba(240,148,51,0.22), rgba(230,104,60,0.20) 40%, rgba(220,39,67,0.22) 70%, rgba(204,35,102,0.22)); border: 1px solid rgba(228,64,95,0.28); }
+  .brand--yt { background: rgba(255,0,0,0.14); border: 1px solid rgba(255,0,0,0.28); }
+
+  .rule { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-3) 0; flex-wrap: wrap; }
+  .rule--stack { flex-direction: column; align-items: stretch; }
+  .rule--stack .veil-segmented { align-self: flex-start; }
+  .rule + .rule { border-top: 1px solid var(--border); }
+  .rule__text { min-width: 0; flex: 1; }
+  .rule__title { font-size: var(--fs-label); font-weight: var(--fw-medium); }
+  .rule__sub { font-size: var(--fs-caption); color: var(--text-faint); margin-top: 2px; }
+
+  /* ---- insights ---- */
+  .hero-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
+  .chart { width: 100%; height: auto; display: block; margin-top: var(--sp-4); overflow: visible; }
+  .chart-x { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-faint); }
+  .mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+</style>
+</head>
+<body>
+
+<!-- ========================= HOME ========================= -->
+<main class="veil-screen" data-screen="home">
+  <div class="veil-topbar">
+    <button class="veil-btn veil-btn--icon" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <span class="veil-topbar__title">Veil</span>
+    <button class="veil-btn veil-btn--icon" aria-label="Insights" data-goto="insights">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+    </button>
+  </div>
+
+  <!-- master toggle -->
+  <div class="master-wrap">
+    <button class="veil-shield-btn" aria-pressed="true" data-master aria-label="Toggle shield">
+      <span class="veil-shield-btn__disc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+    </button>
+    <div class="master__label" id="master-label">Shield On</div>
+    <div class="master__status" id="master-status"><b>Active</b> · Instagram &amp; YouTube protected</div>
+  </div>
+
+  <!-- app panels -->
+  <div class="panels" id="panels">
+
+    <!-- Instagram -->
+    <section class="veil-card panel">
+      <div class="panel-head">
+        <span class="brand brand--ig" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.8.25 2.23.42.56.22.96.48 1.38.9.42.42.68.82.9 1.38.17.42.37 1.06.42 2.23.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.25 1.8-.42 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.17-1.06.37-2.23.42-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.42a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.17-.42-.37-1.06-.42-2.23C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.25-1.8.42-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.17 1.06-.37 2.23-.42C8.42 2.17 8.8 2.16 12 2.16M12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.79.3-1.46.72-2.13 1.38C1.35 2.67.93 3.35.63 4.14.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.3.79.72 1.46 1.38 2.13.67.66 1.34 1.08 2.13 1.38.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56.79-.3 1.46-.72 2.13-1.38.66-.67 1.08-1.34 1.38-2.13.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91-.3-.79-.72-1.46-1.38-2.13C21.33 1.35 20.65.93 19.86.63 19.1.33 18.22.13 16.95.07 15.67.01 15.26 0 12 0m0 5.84A6.16 6.16 0 0 0 5.84 12 6.16 6.16 0 0 0 12 18.16 6.16 6.16 0 0 0 18.16 12 6.16 6.16 0 0 0 12 5.84M12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8m6.41-11.15a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88"/></svg>
+        </span>
+        <span class="panel-head__name">Instagram</span>
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0" data-panel="instagram" aria-label="Instagram blocking"></div>
+      </div>
+
+      <div class="rule">
+        <div class="rule__text"><div class="rule__title">Hide Reels tab</div><div class="rule__sub">Remove it from every nav surface</div></div>
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0" data-rule="instagram.hideReelsTab"></div>
+      </div>
+      <div class="rule rule--stack">
+        <div class="rule__text"><div class="rule__title">Explore grid</div><div class="rule__sub">Search stays; the grid doesn't</div></div>
+        <div class="veil-segmented" data-rule-seg="instagram.exploreGridMode">
+          <button class="veil-segmented__item" aria-selected="true" data-val="blackout">Blackout</button>
+          <button class="veil-segmented__item" data-val="blur">Blur</button>
+          <button class="veil-segmented__item" data-val="hide_videos_only">Videos</button>
+        </div>
+      </div>
+      <div class="rule">
+        <div class="rule__text"><div class="rule__title">Block shared-reel scroll</div><div class="rule__sub">Watch the one that was sent; no swiping on</div></div>
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0" data-rule="instagram.blockSharedReelScroll"></div>
+      </div>
+      <div class="rule">
+        <div class="rule__text"><div class="rule__title">Reels on profiles only</div><div class="rule__sub">Allow a creator's reels when you visit them</div></div>
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0" data-rule="instagram.allowProfileReelsOnly"></div>
+      </div>
+      <div class="rule">
+        <div class="rule__text"><div class="rule__title">Hide feed reel suggestions</div><div class="rule__sub">Strip injected reel units from Home</div></div>
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0" data-rule="instagram.feedReelsHidden"></div>
+      </div>
+    </section>
+
+    <!-- YouTube -->
+    <section class="veil-card panel">
+      <div class="panel-head">
+        <span class="brand brand--yt" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.08 0 12 0 12s0 3.92.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.92 24 12 24 12s0-3.92-.5-5.81M9.55 15.57V8.43L15.82 12z"/></svg>
+        </span>
+        <span class="panel-head__name">YouTube</span>
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0" data-panel="youtube" aria-label="YouTube blocking"></div>
+      </div>
+
+      <div class="rule">
+        <div class="rule__text"><div class="rule__title">Hide Shorts tab</div><div class="rule__sub">Pivot bar + sidebar entries</div></div>
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0" data-rule="youtube.hideShortsTab"></div>
+      </div>
+      <div class="rule">
+        <div class="rule__text"><div class="rule__title">Hide Shorts shelves</div><div class="rule__sub">Home, subscriptions, search, channels</div></div>
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0" data-rule="youtube.hideShortsShelves"></div>
+      </div>
+      <div class="rule">
+        <div class="rule__text"><div class="rule__title">Redirect Shorts to player</div><div class="rule__sub">/shorts/{id} opens in the normal watch page</div></div>
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0" data-rule="youtube.blockShortsPlayer"></div>
+      </div>
+    </section>
+  </div>
+
+  <p class="faint" style="font-size:var(--fs-caption); text-align:center; margin:var(--sp-5) 0 0">
+    Changes save to <code>veil:config</code> and apply the next time an Instagram or YouTube tab loads.
+  </p>
+</main>
+
+<!-- ========================= INSIGHTS ========================= -->
+<main class="veil-screen" data-screen="insights">
+  <div class="veil-topbar">
+    <button class="veil-btn veil-btn--icon" aria-label="Back" data-goto="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="veil-topbar__title">Insights</span>
+    <span style="width:44px"></span>
+  </div>
+
+  <!-- focus reclaimed hero (moved from Home) -->
+  <div class="veil-glass">
+    <div class="hero-head">
+      <div>
+        <div class="veil-stat__label">Focus reclaimed · this week</div>
+        <div class="veil-stat__value">5h 40m</div>
+        <div class="veil-stat__delta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+          +23% vs last week
+        </div>
+      </div>
+      <div class="veil-segmented">
+        <button class="veil-segmented__item" aria-selected="true">Week</button>
+        <button class="veil-segmented__item">Month</button>
+      </div>
+    </div>
+    <svg class="chart" viewBox="0 0 320 92" preserveAspectRatio="none" aria-label="Interceptions per day this week">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#17d861" stop-opacity="0.30" />
+          <stop offset="1" stop-color="#17d861" stop-opacity="0" />
+        </linearGradient>
+      </defs>
+      <path d="M0,66 L53,44 L107,55 L160,18 L213,32 L267,49 L320,38 L320,92 L0,92 Z" fill="url(#g)" />
+      <path d="M0,66 L53,44 L107,55 L160,18 L213,32 L267,49 L320,38" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="160" cy="18" r="4.5" fill="var(--bg)" stroke="var(--accent)" stroke-width="3" />
+    </svg>
+    <div class="chart-x"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="faint" style="font-size:var(--fs-caption); margin-top:6px; text-align:center">Peak Thu · 47 interceptions</div>
+  </div>
+
+  <div class="veil-card between" style="margin-top:var(--sp-4)">
+    <div>
+      <div class="veil-stat__label">Interceptions · all time</div>
+      <div class="veil-stat__value" style="font-size:28px">1,284</div>
+    </div>
+    <div class="veil-stat__delta">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+      +23% this week
+    </div>
+  </div>
+
+  <div class="veil-section-label">By surface</div>
+  <div class="veil-card">
+    <div class="veil-meter"><span class="veil-meter__label">Reels tab</span><span class="veil-meter__val">526</span><div class="veil-meter__track"><div class="veil-meter__fill" style="width:41%"></div></div></div>
+    <div class="veil-meter"><span class="veil-meter__label">Explore grid</span><span class="veil-meter__val">283</span><div class="veil-meter__track"><div class="veil-meter__fill" style="width:22%"></div></div></div>
+    <div class="veil-meter"><span class="veil-meter__label">Shorts shelves</span><span class="veil-meter__val">231</span><div class="veil-meter__track"><div class="veil-meter__fill" style="width:18%"></div></div></div>
+    <div class="veil-meter"><span class="veil-meter__label">Shared-reel scroll</span><span class="veil-meter__val">141</span><div class="veil-meter__track"><div class="veil-meter__fill" style="width:11%"></div></div></div>
+    <div class="veil-meter"><span class="veil-meter__label">Shorts tab</span><span class="veil-meter__val">64</span><div class="veil-meter__track"><div class="veil-meter__fill" style="width:5%"></div></div></div>
+    <div class="veil-meter"><span class="veil-meter__label">Feed suggestions</span><span class="veil-meter__val">39</span><div class="veil-meter__track"><div class="veil-meter__fill" style="width:3%"></div></div></div>
+  </div>
+
+  <div class="veil-section-label">By platform</div>
+  <div class="mini-grid">
+    <div class="veil-card"><div class="veil-stat__label">Instagram</div><div class="veil-stat__value" style="font-size:26px">812</div></div>
+    <div class="veil-card"><div class="veil-stat__label">YouTube</div><div class="veil-stat__value" style="font-size:26px">472</div></div>
+  </div>
+
+  <div class="veil-section-label">Time not scrolled</div>
+  <div class="veil-card">
+    <div class="between">
+      <div class="veil-stat__value" style="font-size:26px">≈ 21h</div>
+      <span class="veil-chip">this month</span>
+    </div>
+    <p class="faint" style="font-size:var(--fs-caption); margin:var(--sp-2) 0 0">Estimate. Assumes ~42s per averted short-form session — tune it in Settings.</p>
+  </div>
+
+  <div class="veil-card veil-row" style="margin-top:var(--sp-4)">
+    <div class="veil-row__icon veil-row__icon--accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/></svg></div>
+    <div class="veil-row__body"><div class="veil-row__title">Most-blocked surface: Reels tab</div><div class="veil-row__sub">41% of all interceptions this month</div></div>
+  </div>
+
+  <!-- recent interceptions (moved from Home) -->
+  <div class="veil-section-label">Recent interceptions</div>
+  <div class="veil-card" style="padding-top:var(--sp-2); padding-bottom:var(--sp-2)">
+    <div class="veil-row">
+      <div class="veil-row__icon veil-row__icon--accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+      <div class="veil-row__body"><div class="veil-row__title">Reels tab blocked</div><div class="veil-row__sub">Instagram · nav</div></div>
+      <div class="veil-row__meta">2m ago<br><span class="faint">×12 today</span></div>
+    </div>
+    <div class="veil-row">
+      <div class="veil-row__icon veil-row__icon--accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+      <div class="veil-row__body"><div class="veil-row__title">Short redirected to player</div><div class="veil-row__sub">YouTube · /shorts → /watch</div></div>
+      <div class="veil-row__meta">18m ago</div>
+    </div>
+    <div class="veil-row">
+      <div class="veil-row__icon veil-row__icon--danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+      <div class="veil-row__body"><div class="veil-row__title">Infinite feed trapped</div><div class="veil-row__sub">Instagram · shared reel in DM</div></div>
+      <div class="veil-row__meta">1h ago</div>
+    </div>
+    <div class="veil-row">
+      <div class="veil-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="4" height="14" rx="1"/><rect x="10" y="5" width="4" height="14" rx="1"/><rect x="17" y="5" width="4" height="14" rx="1"/></svg></div>
+      <div class="veil-row__body"><div class="veil-row__title">Shorts shelf removed</div><div class="veil-row__sub">YouTube · Home feed</div></div>
+      <div class="veil-row__meta">3h ago</div>
+    </div>
+  </div>
+</main>
+
+<!-- ========================= SETTINGS ========================= -->
+<main class="veil-screen" data-screen="settings">
+  <div class="veil-topbar">
+    <button class="veil-btn veil-btn--icon" aria-label="Back" data-goto="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <span class="veil-topbar__title">Settings</span>
+    <span style="width:44px"></span>
+  </div>
+
+  <div class="veil-section-label">Shield health</div>
+  <div class="veil-card" style="padding-top:var(--sp-2); padding-bottom:var(--sp-2)">
+    <div class="veil-row">
+      <div class="veil-row__icon veil-row__icon--accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/></svg></div>
+      <div class="veil-row__body"><div class="veil-row__title">Userscript v3.2</div><div class="veil-row__sub">Active on instagram.com &amp; m.youtube.com</div></div>
+      <div class="veil-row__meta"><span class="veil-chip veil-chip--accent">On</span></div>
+    </div>
+    <div class="veil-row">
+      <div class="veil-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 7h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h4"/><path d="M12 3v10m0 0 3-3m-3 3-3-3"/></svg></div>
+      <div class="veil-row__body"><div class="veil-row__title">Userscripts extension</div><div class="veil-row__sub">Enabled in Safari</div></div>
+      <div class="veil-row__meta"><span class="veil-chip veil-chip--accent">On</span></div>
+    </div>
+    <div class="veil-row">
+      <div class="veil-row__icon veil-row__icon--danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
+      <div class="veil-row__body"><div class="veil-row__title">Screen Time lock</div><div class="veil-row__sub">Not set — nothing stops a quick disable</div></div>
+      <button class="veil-link">Set up</button>
+    </div>
+  </div>
+
+  <div class="veil-section-label">Enforcement</div>
+  <div class="veil-card">
+    <p class="muted" style="margin:0; font-size:var(--fs-label)">Delete the native Instagram &amp; YouTube apps, or cap them at a 1-minute daily limit, so the protected Safari versions are the only way in.</p>
+    <button class="veil-btn veil-btn--secondary veil-btn--sm" style="margin-top:var(--sp-4)"><span class="veil-btn__label">Open setup guide</span></button>
+  </div>
+
+  <div class="veil-section-label">Estimate</div>
+  <div class="veil-card between">
+    <div class="rule__text"><div class="rule__title">Seconds per averted session</div><div class="rule__sub">Feeds the "time not scrolled" figure</div></div>
+    <div class="veil-segmented">
+      <button class="veil-segmented__item" data-val="25">25s</button>
+      <button class="veil-segmented__item" aria-selected="true" data-val="42">42s</button>
+      <button class="veil-segmented__item" data-val="90">90s</button>
+    </div>
+  </div>
+
+  <p class="faint" style="font-size:var(--fs-caption); text-align:center; margin-top:var(--sp-8)">Veil · Companion for the scroll shield<br>Design System v2 · dark</p>
+</main>
+
+<!-- ========================= DOCK ========================= -->
+<div class="veil-dock">
+  <nav class="veil-nav" aria-label="Primary">
+    <button class="veil-nav__item" aria-current="page" data-nav="home" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h14V10"/></svg></button>
+    <button class="veil-nav__item" data-nav="insights" aria-label="Insights"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+    <button class="veil-nav__item" data-nav="settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.2.61.79 1 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </nav>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- config that feeds the userscript (veil_shield.user.js loadConfig) --- */
+  var DEFAULTS = {
+    paused: false,
+    instagram: { paused: false, hideReelsTab: true, exploreGridMode: "blackout", blockSharedReelScroll: true, allowProfileReelsOnly: true, feedReelsHidden: true },
+    youtube:   { paused: false, hideShortsTab: true, hideShortsShelves: true, blockShortsPlayer: true }
+  };
+  var cfg;
+  try {
+    var o = JSON.parse(localStorage.getItem("veil:config") || "{}") || {};
+    cfg = {
+      paused: o.paused === true,
+      instagram: Object.assign({}, DEFAULTS.instagram, o.instagram || {}),
+      youtube:   Object.assign({}, DEFAULTS.youtube,   o.youtube   || {})
+    };
+  } catch (e) { cfg = JSON.parse(JSON.stringify(DEFAULTS)); }
+
+  function persist() { try { localStorage.setItem("veil:config", JSON.stringify(cfg)); } catch (e) {} }
+  function get(p) { var k = p.split("."); return cfg[k[0]][k[1]]; }
+  function set(p, v) { var k = p.split("."); cfg[k[0]][k[1]] = v; persist(); }
+
+  /* ---- screen switching ------------------------------------------------- */
+  var screens = document.querySelectorAll("[data-screen]");
+  var navItems = document.querySelectorAll(".veil-nav__item");
+  function show(name) {
+    screens.forEach(function (s) { s.classList.toggle("is-active", s.getAttribute("data-screen") === name); });
+    navItems.forEach(function (n) {
+      if (n.getAttribute("data-nav") === name) n.setAttribute("aria-current", "page");
+      else n.removeAttribute("aria-current");
+    });
+    window.scrollTo(0, 0);
+  }
+  navItems.forEach(function (n) { n.addEventListener("click", function () { show(n.getAttribute("data-nav")); }); });
+  document.querySelectorAll("[data-goto]").forEach(function (b) {
+    b.addEventListener("click", function () { show(b.getAttribute("data-goto")); });
+  });
+  show("home");
+
+  /* ---- generic switch binding ----------------------------------------- */
+  function bindSwitch(el, read, write) {
+    el.setAttribute("aria-checked", String(read()));
+    function toggle() { var v = el.getAttribute("aria-checked") !== "true"; el.setAttribute("aria-checked", String(v)); write(v); }
+    el.addEventListener("click", toggle);
+    el.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggle(); } });
+  }
+
+  /* rule switches */
+  document.querySelectorAll("[data-rule]").forEach(function (el) {
+    var path = el.getAttribute("data-rule");
+    bindSwitch(el, function () { return get(path); }, function (v) { set(path, v); });
+  });
+
+  /* explore-grid mode segmented */
+  document.querySelectorAll("[data-rule-seg]").forEach(function (seg) {
+    var path = seg.getAttribute("data-rule-seg");
+    var cur = get(path);
+    seg.querySelectorAll(".veil-segmented__item").forEach(function (b) {
+      b.setAttribute("aria-selected", String(b.getAttribute("data-val") === cur));
+      b.addEventListener("click", function () {
+        seg.querySelectorAll(".veil-segmented__item").forEach(function (x) { x.setAttribute("aria-selected", "false"); });
+        b.setAttribute("aria-selected", "true");
+        set(path, b.getAttribute("data-val"));
+      });
+    });
+  });
+
+  /* plain segmented (Settings estimate, Insights Week/Month) — visual only */
+  document.querySelectorAll(".veil-segmented:not([data-rule-seg]) .veil-segmented__item").forEach(function (b) {
+    b.addEventListener("click", function () {
+      b.parentElement.querySelectorAll(".veil-segmented__item").forEach(function (x) { x.setAttribute("aria-selected", "false"); });
+      b.setAttribute("aria-selected", "true");
+    });
+  });
+
+  /* ---- per-platform panel switch (switch ON = platform active) -------- */
+  document.querySelectorAll("[data-panel]").forEach(function (el) {
+    var plat = el.getAttribute("data-panel");
+    bindSwitch(el,
+      function () { return !cfg[plat].paused; },
+      function (v) { cfg[plat].paused = !v; persist(); reflectPaused(); }
+    );
+  });
+
+  /* ---- master button ------------------------------------------------- */
+  var master = document.querySelector("[data-master]");
+  var masterLabel = document.getElementById("master-label");
+  var statusEl = document.getElementById("master-status");
+  var panelsEl = document.getElementById("panels");
+
+  function reflectPaused() {
+    var globalPaused = cfg.paused;
+    master.setAttribute("aria-pressed", String(!globalPaused));
+    masterLabel.textContent = globalPaused ? "Shield Off" : "Shield On";
+
+    var igOn = !cfg.instagram.paused, ytOn = !cfg.youtube.paused;
+    if (globalPaused) {
+      statusEl.className = "master__status is-paused";
+      statusEl.innerHTML = "<b>Paused</b> · nothing is being blocked right now";
+    } else if (igOn && ytOn) {
+      statusEl.className = "master__status";
+      statusEl.innerHTML = "<b>Active</b> · Instagram &amp; YouTube protected";
+    } else if (!igOn && !ytOn) {
+      statusEl.className = "master__status is-paused";
+      statusEl.innerHTML = "<b>Both platforms paused</b> · master is on but idle";
+    } else {
+      statusEl.className = "master__status";
+      statusEl.innerHTML = "<b>Active</b> · " + (igOn ? "Instagram only" : "YouTube only");
+    }
+    panelsEl.classList.toggle("is-paused", globalPaused);
+    // keep every panel switch in sync
+    document.querySelectorAll("[data-panel]").forEach(function (el) {
+      el.setAttribute("aria-checked", String(!cfg[el.getAttribute("data-panel")].paused));
+    });
+  }
+
+  master.addEventListener("click", function () {
+    cfg.paused = !cfg.paused;
+    persist();
+    reflectPaused();
+  });
+
+  reflectPaused();
+})();
+</script>
+</body>
+</html>

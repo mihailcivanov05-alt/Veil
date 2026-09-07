@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>PayloadContent</key>
+	<array>
+		<dict>
+			<key>FullScreen</key>
+			<false/>
+			<key>IsRemovable</key>
+			<true/>
+			<key>PayloadDisplayName</key>
+			<string>Instagram (No Reels)</string>
+			<key>PayloadIdentifier</key>
+			<string>com.noreels.webclip.instagram</string>
+			<key>PayloadType</key>
+			<string>com.apple.webClip.managed</string>
+			<key>PayloadUUID</key>
+			<string>93FD84A4-6811-442B-9A87-6A4D1E348DA9</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>Precomposed</key>
+			<true/>
+			<key>URL</key>
+			<string>https://www.instagram.com/direct/inbox/</string>
+		</dict>
+		<dict>
+			<key>FullScreen</key>
+			<false/>
+			<key>IsRemovable</key>
+			<true/>
+			<key>PayloadDisplayName</key>
+			<string>YouTube (No Shorts)</string>
+			<key>PayloadIdentifier</key>
+			<string>com.noreels.webclip.youtube</string>
+			<key>PayloadType</key>
+			<string>com.apple.webClip.managed</string>
+			<key>PayloadUUID</key>
+			<string>289692B3-8134-45D9-8E29-D6BC6C16835C</string>
+			<key>PayloadVersion</key>
+			<integer>1</integer>
+			<key>Precomposed</key>
+			<true/>
+			<key>URL</key>
+			<string>https://m.youtube.com/feed/subscriptions</string>
+		</dict>
+	</array>
+	<key>PayloadDescription</key>
+	<string>Installs distraction-free Instagram and YouTube clients on your iPhone.</string>
+	<key>PayloadDisplayName</key>
+	<string>NoReels Distraction-Free Apps</string>
+	<key>PayloadIdentifier</key>
+	<string>com.noreels.profile</string>
+	<key>PayloadOrganization</key>
+	<string>NoReels Private</string>
+	<key>PayloadRemovalDisallowed</key>
+	<false/>
+	<key>PayloadType</key>
+	<string>Configuration</string>
+	<key>PayloadUUID</key>
+	<string>20D25F94-B823-4B44-8593-CAACB4615863</string>
+	<key>PayloadVersion</key>
+	<integer>1</integer>
+</dict>
+</plist>

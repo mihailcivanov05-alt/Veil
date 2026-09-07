@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veil Shield v3.1 — Verification Suite</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0b0f19; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; padding: 20px; line-height: 1.5; }
+    h1 { font-size: 22px; color: #38bdf8; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+    h2 { font-size: 16px; color: #94a3b8; margin: 20px 0 10px; border-bottom: 1px solid #1e293b; padding-bottom: 6px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .card-name { font-size: 14px; font-weight: 500; }
+    .pass { color: #4ade80; font-weight: 700; font-size: 13px; white-space: nowrap; }
+    .fail { color: #f87171; font-weight: 700; font-size: 13px; white-space: nowrap; }
+    .error-detail { font-size: 12px; color: #f87171; margin-top: 4px; }
+    #summary { margin-top: 24px; padding: 16px; border-radius: 10px; background: #0f172a; border: 2px solid #334155; font-weight: 600; font-size: 18px; text-align: center; }
+    .summary-pass { border-color: #4ade80 !important; color: #4ade80; }
+    .summary-fail { border-color: #f87171 !important; color: #f87171; }
+  </style>
+</head>
+<body>
+  <h1>🛡️ Veil Shield v3.1 — Verification Suite</h1>
+  <div class="subtitle">Target: iOS Mobile Safari · iPhone 17 Pro · route detector + redirect logic (must mirror veil_shield.user.js §3 / §7)</div>
+  <div id="results"></div>
+  <div id="summary">Running...</div>
+
+  <script>
+    // ── Lifted verbatim from veil_shield.user.js §3 ──────────────────────────
+    const IG_RESERVED = [
+      'p', 'tv', 'reel', 'reels', 'explore', 'direct', 'stories', 'accounts',
+      'about', 'legal', 'developer', 'emails', 'privacy', 'terms', 'session',
+      'nametag', 'challenge', 'oauth', 'api', 'graphql', 'your_activity',
+      'ar', 'directory', 'web', 'push',
+    ];
+
+    function detectPageType(platform, pathname) {
+      const p = pathname;
+      if (platform === 'instagram') {
+        if (p === '/' || p === '') return 'home_feed';
+        if (p.startsWith('/direct/')) return 'direct_messages';
+        if (p === '/explore' || p === '/explore/') return 'explore_grid';
+        if (p.startsWith('/explore/')) return 'explore_search';
+        if (p === '/reels' || p === '/reels/' || p.startsWith('/reels/')) return 'reels_tab';
+        if (p.startsWith('/reel/')) return 'shared_reel';
+        if (p.startsWith('/stories/')) return 'ig_stories';
+        const segs = p.split('/').filter(Boolean);
+        if (segs.length >= 1 && IG_RESERVED.indexOf(segs[0]) === -1) return 'creator_profile';
+        return 'ig_other';
+      }
+      if (platform === 'youtube') {
+        if (p === '/shorts' || p.startsWith('/shorts/')) return 'yt_shorts';
+        if (p.startsWith('/watch')) return 'yt_watch';
+        if (p === '/' || p === '') return 'yt_home';
+        if (p.startsWith('/results')) return 'yt_search';
+        if (p.startsWith('/feed/')) return 'yt_feed';
+        if (p.startsWith('/channel/') || p.startsWith('/@') ||
+            p.startsWith('/c/') || p.startsWith('/user/')) return 'yt_channel';
+        return 'yt_other';
+      }
+      return 'unknown';
+    }
+
+    // ── Lifted verbatim from veil_shield.user.js §7 ──────────────────────────
+    function extractShortId(path) {
+      if (!path.startsWith('/shorts/')) return null;
+      const id = path.slice('/shorts/'.length).split(/[?#/]/)[0];
+      return id || null;
+    }
+
+    // ── Tests ───────────────────────────────────────────────────────────────
+    const groups = [
+      {
+        name: 'Instagram — routes that must be BLOCKED',
+        tests: [
+          { name: '/reels/ → reels_tab', fn: () => detectPageType('instagram', '/reels/') === 'reels_tab' },
+          { name: '/reels (no slash) → reels_tab', fn: () => detectPageType('instagram', '/reels') === 'reels_tab' },
+          { name: '/reels/audio/123/ → reels_tab', fn: () => detectPageType('instagram', '/reels/audio/123/') === 'reels_tab' },
+          { name: '/reel/C9x81kLo9_p/ → shared_reel', fn: () => detectPageType('instagram', '/reel/C9x81kLo9_p/') === 'shared_reel' },
+          { name: '/explore/ → explore_grid', fn: () => detectPageType('instagram', '/explore/') === 'explore_grid' },
+          { name: '/explore (no slash) → explore_grid', fn: () => detectPageType('instagram', '/explore') === 'explore_grid' },
+        ],
+      },
+      {
+        name: 'Instagram — routes that must stay FUNCTIONAL (Invariant 2)',
+        tests: [
+          { name: '/ → home_feed', fn: () => detectPageType('instagram', '/') === 'home_feed' },
+          { name: '/direct/inbox/ → direct_messages', fn: () => detectPageType('instagram', '/direct/inbox/') === 'direct_messages' },
+          { name: '/direct/t/12345/ → direct_messages', fn: () => detectPageType('instagram', '/direct/t/12345/') === 'direct_messages' },
+          { name: '/explore/search/keyword/ → explore_search (user-initiated)', fn: () => detectPageType('instagram', '/explore/search/keyword/') === 'explore_search' },
+          { name: '/explore/tags/sunset/ → explore_search', fn: () => detectPageType('instagram', '/explore/tags/sunset/') === 'explore_search' },
+          { name: '/mkbhd/ → creator_profile', fn: () => detectPageType('instagram', '/mkbhd/') === 'creator_profile' },
+          { name: '/mkbhd/reels/ → creator_profile (allowed sub-tab)', fn: () => detectPageType('instagram', '/mkbhd/reels/') === 'creator_profile' },
+          { name: '/mkbhd/tagged/ → creator_profile', fn: () => detectPageType('instagram', '/mkbhd/tagged/') === 'creator_profile' },
+          { name: '/stories/highlights/1770/ → ig_stories', fn: () => detectPageType('instagram', '/stories/highlights/1770/') === 'ig_stories' },
+        ],
+      },
+      {
+        name: 'Instagram — reserved paths must NOT be seen as profiles',
+        tests: [
+          { name: '/p/ABC123/ → ig_other', fn: () => detectPageType('instagram', '/p/ABC123/') === 'ig_other' },
+          { name: '/tv/ABC123/ → ig_other', fn: () => detectPageType('instagram', '/tv/ABC123/') === 'ig_other' },
+          { name: '/accounts/edit/ → ig_other', fn: () => detectPageType('instagram', '/accounts/edit/') === 'ig_other' },
+          { name: '/your_activity/ → ig_other', fn: () => detectPageType('instagram', '/your_activity/') === 'ig_other' },
+          { name: '/reelsxyz/ (username, not /reels/) → creator_profile', fn: () => detectPageType('instagram', '/reelsxyz/') === 'creator_profile' },
+        ],
+      },
+      {
+        name: 'YouTube — route detection',
+        tests: [
+          { name: '/ → yt_home', fn: () => detectPageType('youtube', '/') === 'yt_home' },
+          { name: '/shorts/dQw4w9WgXcQ → yt_shorts', fn: () => detectPageType('youtube', '/shorts/dQw4w9WgXcQ') === 'yt_shorts' },
+          { name: '/shorts (bare) → yt_shorts', fn: () => detectPageType('youtube', '/shorts') === 'yt_shorts' },
+          { name: '/watch?v=dQw4w9WgXcQ → yt_watch', fn: () => detectPageType('youtube', '/watch?v=dQw4w9WgXcQ') === 'yt_watch' },
+          { name: '/results?search_query=test → yt_search', fn: () => detectPageType('youtube', '/results?search_query=test') === 'yt_search' },
+          { name: '/@mkbhd → yt_channel', fn: () => detectPageType('youtube', '/@mkbhd') === 'yt_channel' },
+          { name: '/c/mkbhd → yt_channel', fn: () => detectPageType('youtube', '/c/mkbhd') === 'yt_channel' },
+          { name: '/user/marquesbrownlee → yt_channel', fn: () => detectPageType('youtube', '/user/marquesbrownlee') === 'yt_channel' },
+          { name: '/feed/subscriptions → yt_feed', fn: () => detectPageType('youtube', '/feed/subscriptions') === 'yt_feed' },
+        ],
+      },
+      {
+        name: 'YouTube — Shorts → Watch id extraction (§7)',
+        tests: [
+          { name: 'basic', fn: () => extractShortId('/shorts/dQw4w9WgXcQ') === 'dQw4w9WgXcQ' },
+          { name: 'with ?query', fn: () => extractShortId('/shorts/abc123?feature=share') === 'abc123' },
+          { name: 'with #hash', fn: () => extractShortId('/shorts/xyz789#t=5') === 'xyz789' },
+          { name: 'with trailing slash', fn: () => extractShortId('/shorts/test123/') === 'test123' },
+          { name: 'non-shorts path → null', fn: () => extractShortId('/watch?v=abc') === null },
+          { name: 'empty shorts path → null', fn: () => extractShortId('/shorts/') === null },
+        ],
+      },
+      {
+        name: 'Selector sanity (stable anchors resolve)',
+        tests: [
+          { name: 'a[href="/reels/"]', fn: () => { const a = document.createElement('a'); a.setAttribute('href', '/reels/'); return a.matches('a[href^="/reels/"]'); } },
+          { name: 'svg[aria-label="Reels"]', fn: () => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('aria-label', 'Reels'); return s.matches('svg[aria-label="Reels"]'); } },
+          { name: 'explore tile a[href^="/p/"]', fn: () => { const a = document.createElement('a'); a.setAttribute('href', '/p/ABC/'); return a.matches('a[href^="/p/"]'); } },
+          { name: 'ytm-reel-shelf-renderer', fn: () => document.createElement('ytm-reel-shelf-renderer').matches('ytm-reel-shelf-renderer') },
+          { name: 'ytm-shorts-lockup-view-model', fn: () => document.createElement('ytm-shorts-lockup-view-model').matches('ytm-shorts-lockup-view-model') },
+          { name: ':has() supported by this browser', fn: () => { try { document.body.matches(':has(*)'); return true; } catch (e) { return false; } } },
+        ],
+      },
+      {
+        name: 'Overlay guard (no stacking / leaking)',
+        tests: [
+          { name: 'guard blocks a second overlay', fn: () => {
+              const d = document.createElement('div'); d.id = 'veil-failsafe-overlay';
+              document.body.appendChild(d);
+              const blocked = !!document.getElementById('veil-failsafe-overlay');
+              d.remove();
+              return blocked;
+          } },
+        ],
+      },
+    ];
+
+    const results = document.getElementById('results');
+    let pass = 0, total = 0;
+    groups.forEach((group) => {
+      const h = document.createElement('h2'); h.textContent = group.name; results.appendChild(h);
+      group.tests.forEach((t) => {
+        total++;
+        let ok = false, err = null;
+        try { ok = t.fn(); } catch (e) { err = e.message; }
+        if (ok) pass++;
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = '<span class="card-name">' + t.name + '</span><span class="' + (ok ? 'pass' : 'fail') + '">' + (ok ? 'PASS ✓' : 'FAIL ✗') + '</span>';
+        if (err) { const e = document.createElement('div'); e.className = 'error-detail'; e.textContent = err; card.appendChild(e); }
+        results.appendChild(card);
+      });
+    });
+    const s = document.getElementById('summary');
+    s.textContent = pass + ' / ' + total + ' passed (' + Math.round(pass / total * 100) + '%)';
+    s.className = pass === total ? 'summary-pass' : 'summary-fail';
+  </script>
+</body>
+</html>

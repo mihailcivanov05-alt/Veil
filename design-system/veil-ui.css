@@ -1,0 +1,758 @@
+/* ============================================================================
+   VEIL — Component layer  v2.0
+   Requires tokens.css first. Pure CSS, no framework, no JS.
+
+   Buttons
+     .veil-btn                     base (never used alone)
+     .veil-btn.veil-btn--primary   animated "shiny" CTA — primary actions only
+     .veil-btn.veil-btn--secondary static, shares the primary's border/bg language
+     .veil-btn.veil-btn--ghost     low-emphasis text button
+     .veil-btn.veil-btn--icon      square icon button (static)
+     .veil-btn.veil-btn--danger    destructive (secondary weight, red)
+   Surfaces
+     .veil-card  .veil-glass  .veil-stat  .veil-chip  .veil-segmented
+     .veil-input  .veil-nav (pill dock) + .veil-nav__item
+   Shield (in-page fail-safe overlay — mirrors veil_shield.user.js)
+     .veil-shield  .veil-shield__icon  h2  p  .veil-btn--primary
+   ========================================================================= */
+
+/* ---- @property registrations (must be top-level) ----------------------- */
+@property --veil-ga        { syntax: "<angle>";      initial-value: 0deg;  inherits: false; }
+@property --veil-ga-offset  { syntax: "<angle>";      initial-value: 0deg;  inherits: false; }
+@property --veil-gp        { syntax: "<percentage>"; initial-value: 5%;    inherits: false; }
+@property --veil-shine      { syntax: "<color>";      initial-value: #d8ffe8; inherits: false; }
+
+/* ---- Button base ----------------------------------------------------- */
+.veil-btn {
+  --_bg:        var(--surface-1);
+  --_bg-subtle: var(--surface-2);
+  --_fg:        var(--text);
+  --_ring:      var(--accent);
+  --_ring-soft: var(--accent-shine-soft);
+  --_shadow:    2px;
+  --_dur:       3s;
+  --_trans:     800ms var(--ease-out);
+
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: 15px 30px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-title);
+  font-weight: var(--fw-medium);
+  line-height: 1.2;
+  letter-spacing: -0.006em;
+  color: var(--_fg);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  outline-offset: 3px;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  transition: translate var(--dur-press) var(--ease-out),
+              filter var(--dur-fast) var(--ease-out),
+              --veil-ga-offset var(--_trans),
+              --veil-gp var(--_trans),
+              --veil-shine var(--_trans);
+  /* dual gradient: solid pill on padding-box, conic ring on border-box */
+  background:
+    linear-gradient(var(--_bg), var(--_bg)) padding-box,
+    conic-gradient(
+      from calc(var(--veil-ga) - var(--veil-ga-offset)),
+      transparent,
+      var(--_ring)  var(--veil-gp),
+      var(--veil-shine) calc(var(--veil-gp) * 2),
+      var(--_ring)  calc(var(--veil-gp) * 3),
+      transparent   calc(var(--veil-gp) * 4)
+    ) border-box;
+  box-shadow: inset 0 0 0 1px var(--_bg-subtle);
+}
+
+.veil-btn:focus-visible { outline: 2px solid var(--accent); }
+.veil-btn:active        { translate: 0 1px; }
+.veil-btn[disabled],
+.veil-btn[aria-disabled="true"] {
+  pointer-events: none;
+  filter: grayscale(1) opacity(0.5);
+}
+
+.veil-btn > .veil-btn__label { position: relative; z-index: 1; }
+
+/* ---- PRIMARY — the animated shiny CTA (primary actions only) --------- */
+.veil-btn--primary {
+  --_bg:        var(--bg);
+  --_bg-subtle: var(--surface-2);
+}
+.veil-btn--primary::before,
+.veil-btn--primary::after,
+.veil-btn--primary .veil-btn__label::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  translate: -50% -50%;
+  z-index: -1;
+}
+/* halftone dot field, masked to a rotating wedge */
+.veil-btn--primary::before {
+  --_size: calc(100% - var(--_shadow) * 3);
+  --_pos: 2px;
+  --_space: calc(var(--_pos) * 2);
+  width: var(--_size);
+  height: var(--_size);
+  background: radial-gradient(
+    circle at var(--_pos) var(--_pos),
+    var(--accent-shine) calc(var(--_pos) / 4),
+    transparent 0
+  ) padding-box;
+  background-size: var(--_space) var(--_space);
+  background-repeat: space;
+  mask-image: conic-gradient(
+    from calc(var(--veil-ga) + 45deg),
+    #000, transparent 10% 90%, #000
+  );
+  border-radius: inherit;
+  opacity: 0.32;
+}
+/* inner shimmer sweep */
+.veil-btn--primary::after {
+  width: 100%;
+  aspect-ratio: 1;
+  background: linear-gradient(-50deg, transparent, var(--accent), transparent);
+  mask-image: radial-gradient(circle at bottom, transparent 40%, #000);
+  opacity: 0.55;
+  animation: veil-shimmer linear infinite var(--_dur);
+}
+/* breathing inner glow, revealed on hover/focus */
+.veil-btn--primary .veil-btn__label::before {
+  --_size: calc(100% + 1rem);
+  width: var(--_size);
+  height: var(--_size);
+  box-shadow: inset 0 -1ex 2rem 4px var(--accent);
+  opacity: 0;
+  transition: opacity var(--_trans);
+  animation: veil-breathe linear infinite calc(var(--_dur) * 1.5);
+}
+
+/* the conic ring + the dot-wedge mask rotate continuously */
+.veil-btn--primary,
+.veil-btn--primary::before {
+  animation: veil-gradient-angle linear infinite var(--_dur);
+}
+.veil-btn--primary:is(:hover, :focus-visible) {
+  --veil-gp: 20%;
+  --veil-ga-offset: 95deg;
+  --veil-shine: var(--accent-shine-soft);
+  filter: brightness(1.05);
+}
+/* hover adds a second, faster reverse pass (composited) */
+.veil-btn--primary:is(:hover, :focus-visible),
+.veil-btn--primary:is(:hover, :focus-visible)::before {
+  animation: veil-gradient-angle linear infinite var(--_dur),
+             veil-gradient-angle linear infinite calc(var(--_dur) / 0.4) reverse;
+  animation-composition: add;
+}
+.veil-btn--primary:is(:hover, :focus-visible) .veil-btn__label::before { opacity: 1; }
+
+/* Solid-fill variant of primary (black text on green) — e.g. "Send Money".
+   Same shell, filled body, no shimmer needed at this contrast. */
+.veil-btn--primary.veil-btn--solid {
+  --_bg: var(--accent);
+  --_bg-subtle: var(--accent-deep);
+  color: var(--on-accent);
+  font-weight: var(--fw-semibold);
+  box-shadow: inset 0 0 0 1px var(--accent-deep), 0 8px 24px -10px var(--accent-glow);
+}
+.veil-btn--primary.veil-btn--solid::after { opacity: 0.28; mix-blend-mode: overlay; }
+
+/* ---- SECONDARY — static, same border/bg language, no animation ------- */
+.veil-btn--secondary {
+  --veil-gp: 12%;
+  --veil-ga-offset: 60deg;
+  color: var(--text);
+}
+.veil-btn--secondary:hover   { filter: brightness(1.08); }
+
+/* ---- GHOST — low emphasis --------------------------------------------- */
+.veil-btn--ghost {
+  padding: 12px 18px;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-weight: var(--fw-medium);
+}
+.veil-btn--ghost:hover { color: var(--text); background: var(--surface-2); }
+
+/* ---- ICON — square, static ----------------------------------------- */
+.veil-btn--icon {
+  width: 44px; height: 44px;
+  padding: 0;
+  border-radius: var(--r-pill);
+  --veil-gp: 10%;
+  --veil-ga-offset: 40deg;
+}
+.veil-btn--icon svg { width: 20px; height: 20px; }
+.veil-btn--icon:hover { filter: brightness(1.1); }
+
+/* ---- DANGER — destructive, secondary weight ------------------------ */
+.veil-btn--danger {
+  --_ring: var(--danger);
+  --_ring-soft: #ff9a9b;
+  --veil-shine: #ffe3e3;
+  color: #ffd9d9;
+}
+.veil-btn--danger.veil-btn--solid {
+  background: var(--danger) padding-box, var(--danger) border-box;
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2), 0 8px 24px -12px rgba(255,77,79,0.5);
+}
+
+/* ---- Keyframes ---------------------------------------------------- */
+@keyframes veil-gradient-angle { to { --veil-ga: 360deg; } }
+@keyframes veil-shimmer        { to { rotate: 360deg; } }
+@keyframes veil-breathe        { from, to { scale: 1; } 50% { scale: 1.2; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .veil-btn--primary,
+  .veil-btn--primary::before,
+  .veil-btn--primary::after,
+  .veil-btn--primary .veil-btn__label::before { animation: none !important; }
+  /* freeze the ring at a pleasant static angle so it still reads as "shiny" */
+  .veil-btn--primary { --veil-gp: 16%; --veil-ga-offset: 90deg; }
+}
+
+/* ===================================================================
+   SURFACES
+   =================================================================== */
+
+.veil-card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-5);
+}
+
+/* translucent "glass" card — the reference-screenshot balance card */
+.veil-glass {
+  position: relative;
+  border-radius: var(--r-lg);
+  padding: var(--sp-6);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-line-soft);
+  box-shadow: var(--border-inset), 0 24px 48px -24px rgba(0,0,0,0.75);
+}
+/* top light — the hairline catching the "light source" */
+.veil-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, var(--glass-line), transparent);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .veil-glass { background: var(--glass-bg-strong); }
+}
+
+/* stat block — "TOTAL BALANCE / $5,535.50" */
+.veil-stat__label {
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tr-caption);
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.veil-stat__value {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-display);
+  font-weight: var(--fw-bold);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.veil-stat__delta {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  margin-top: var(--sp-3);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semibold);
+  color: var(--accent);
+}
+.veil-stat__delta--down { color: var(--danger); }
+
+/* chip / tag */
+.veil-chip {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  padding: 5px 10px;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-medium);
+  letter-spacing: 0.02em;
+  border-radius: var(--r-xs);
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.veil-chip--accent { color: var(--accent); background: var(--accent-surface); border-color: var(--accent-line); }
+.veil-chip--danger { color: var(--danger); background: var(--danger-surface); border-color: var(--danger-line); }
+
+/* segmented control — "Month v" */
+.veil-segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+}
+.veil-segmented__item {
+  padding: 7px 14px;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-medium);
+  color: var(--text-faint);
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+}
+.veil-segmented__item[aria-selected="true"] { color: var(--text); background: var(--surface-3); }
+
+/* input */
+.veil-input {
+  width: 100%;
+  padding: 13px 16px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.veil-input::placeholder { color: var(--text-faint); }
+.veil-input:focus { border-color: var(--accent-line); box-shadow: var(--ring); }
+
+/* floating pill nav dock */
+/* the whole pill carries the shiny light + shadow motion and the dot wedge,
+   hover behaviour mirrored from the original .shiny-cta. The 3 icon buttons
+   stay static. */
+.veil-nav {
+  --_shine: #d8ffe8;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  gap: var(--sp-1);
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  background:
+    linear-gradient(var(--glass-bg-strong), var(--glass-bg-strong)) padding-box,
+    conic-gradient(
+      from calc(var(--veil-ga) - var(--veil-ga-offset)),
+      var(--glass-line),
+      var(--_shine) var(--veil-gp),
+      #ffffff calc(var(--veil-gp) * 2),
+      var(--_shine) calc(var(--veil-gp) * 3),
+      var(--glass-line) calc(var(--veil-gp) * 4)
+    ) border-box;
+  box-shadow: var(--shadow-3), var(--border-inset);
+  transition:
+    box-shadow 800ms cubic-bezier(0.25, 1, 0.5, 1),
+    --veil-gp 800ms cubic-bezier(0.25, 1, 0.5, 1),
+    --veil-ga-offset 800ms cubic-bezier(0.25, 1, 0.5, 1),
+    --_shine 800ms cubic-bezier(0.25, 1, 0.5, 1);
+  animation: veil-gradient-angle linear infinite 3s;
+}
+/* tiny halftone dot wedge — behind the icon buttons */
+.veil-nav::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  pointer-events: none;
+  --_pos: 2px;
+  --_space: calc(var(--_pos) * 2);
+  background: radial-gradient(circle at var(--_pos) var(--_pos), #fff calc(var(--_pos) / 2.6), transparent 0);
+  background-size: var(--_space) var(--_space);
+  background-repeat: space;
+  border-radius: inherit;
+  opacity: 0.24;
+  mask-image: conic-gradient(from calc(var(--veil-ga) + 45deg), #000, transparent 15% 85%, #000);
+  animation: veil-gradient-angle linear infinite 3s;
+}
+/* outer glow that breathes (independent of hover) */
+.veil-nav::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: 0 0 16px -6px var(--accent-glow);
+  animation: veil-nav-breathe 4.5s var(--ease-in-out) infinite;
+}
+@keyframes veil-nav-breathe {
+  0%, 100% { box-shadow: 0 0 16px -6px var(--accent-glow); }
+  50%      { box-shadow: 0 0 30px -3px var(--accent-glow); }
+}
+
+/* HOVER / FOCUS — the .shiny-cta hover: arc balloons, phase shifts, shine goes
+   pure white, a faster reverse spin composites in, an inner bloom fades up */
+.veil-nav:is(:hover, :focus-within) {
+  --veil-gp: 18%;
+  --veil-ga-offset: 95deg;
+  --_shine: #ffffff;
+  box-shadow: var(--shadow-3), var(--border-inset), inset 0 0 28px -8px var(--accent-shine);
+}
+.veil-nav:is(:hover, :focus-within),
+.veil-nav:is(:hover, :focus-within)::before {
+  animation:
+    veil-gradient-angle linear infinite 3s,
+    veil-gradient-angle linear infinite 1.25s reverse;
+  animation-composition: add;
+}
+
+.veil-nav__item {
+  display: grid; place-items: center;
+  width: 46px; height: 46px;
+  border: 0;
+  border-radius: var(--r-pill);
+  color: var(--text-faint);
+  background: transparent;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+}
+.veil-nav__item svg { width: 20px; height: 20px; }
+.veil-nav__item:hover { color: var(--text-muted); }
+.veil-nav__item[aria-current="page"] {
+  color: var(--on-accent);
+  background: var(--accent);
+  box-shadow: 0 6px 18px -6px var(--accent-glow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .veil-nav,
+  .veil-nav::before,
+  .veil-nav::after { animation: none; }
+}
+
+/* ===================================================================
+   SHIELD — in-page fail-safe overlay (mirrors veil_shield.user.js §4)
+   =================================================================== */
+
+.veil-shield {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-shield);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  padding: env(safe-area-inset-top, 24px) 24px env(safe-area-inset-bottom, 24px);
+  text-align: center;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: radial-gradient(ellipse at 50% 36%, #0c1a12, #020304 70%);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.veil-shield__icon { color: var(--accent); }
+.veil-shield__icon svg { width: 44px; height: 44px; }
+.veil-shield h2 {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tr-h1);
+  color: var(--danger);
+}
+.veil-shield p {
+  margin: 0;
+  max-width: 300px;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-muted);
+}
+.veil-shield .veil-btn { margin-top: var(--sp-4); }
+
+/* ===================================================================
+   APP SHELL — companion-dashboard primitives
+   =================================================================== */
+
+.veil-screen { max-width: 440px; margin: 0 auto; padding: 0 var(--sp-4) 132px; }
+
+.veil-topbar {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--sp-4) 0 var(--sp-3);
+  background: linear-gradient(var(--bg) 68%, transparent);
+}
+.veil-topbar__title { font-size: var(--fs-title); font-weight: var(--fw-semibold); letter-spacing: -0.01em; }
+
+.veil-section-label {
+  font-size: var(--fs-caption); font-weight: var(--fw-medium);
+  letter-spacing: var(--tr-caption); text-transform: uppercase;
+  color: var(--text-faint);
+  margin: var(--sp-6) 0 var(--sp-3);
+}
+.veil-link {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font: var(--fw-medium) var(--fs-label)/1 var(--font-sans);
+  color: var(--accent);
+}
+
+/* ---- toggle switch ------------------------------------------------- */
+.veil-switch {
+  --_w: 46px; --_h: 27px; --_pad: 3px;
+  position: relative; flex-shrink: 0;
+  width: var(--_w); height: var(--_h);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out);
+}
+.veil-switch::after {
+  content: "";
+  position: absolute; top: var(--_pad); left: var(--_pad);
+  width: calc(var(--_h) - var(--_pad) * 2 - 2px);
+  height: calc(var(--_h) - var(--_pad) * 2 - 2px);
+  border-radius: var(--r-pill);
+  background: var(--text-faint);
+  box-shadow: var(--shadow-1);
+  transition: translate var(--dur-base) var(--ease-spring),
+              background var(--dur-fast) var(--ease-out);
+}
+.veil-switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent-deep); }
+.veil-switch[aria-checked="true"]::after {
+  translate: calc(var(--_w) - var(--_h)) 0;
+  background: var(--on-accent);
+}
+.veil-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---- list row --------------------------------------------------- */
+.veil-row { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0; }
+.veil-row + .veil-row { border-top: 1px solid var(--border); }
+.veil-row__icon {
+  flex-shrink: 0; display: grid; place-items: center;
+  width: 38px; height: 38px; border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--text-muted);
+}
+.veil-row__icon svg { width: 18px; height: 18px; }
+.veil-row__icon--accent { background: var(--accent-surface); color: var(--accent); }
+.veil-row__icon--danger { background: var(--danger-surface); color: var(--danger); }
+.veil-row__body { flex: 1; min-width: 0; }
+.veil-row__title { font-size: var(--fs-label); font-weight: var(--fw-medium); color: var(--text); }
+.veil-row__sub { font-size: var(--fs-caption); color: var(--text-faint); margin-top: 2px; }
+.veil-row__meta {
+  flex-shrink: 0; font-size: var(--fs-caption); color: var(--text-muted);
+  font-variant-numeric: tabular-nums; text-align: right;
+}
+
+/* ---- circular quick toggle -------------------------------------- */
+.veil-quick { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 60px; flex-shrink: 0; }
+.veil-quick__btn {
+  width: 52px; height: 52px; border-radius: var(--r-pill);
+  display: grid; place-items: center;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-muted); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+}
+.veil-quick__btn svg { width: 20px; height: 20px; }
+.veil-quick__btn[aria-pressed="true"] {
+  color: var(--accent); border-color: var(--accent-line); background: var(--accent-surface);
+}
+.veil-quick__label { font-size: 10px; line-height: 1.25; color: var(--text-faint); text-align: center; }
+
+/* ---- horizontal scroller (platform cards) --------------------- */
+.veil-scroll-x {
+  display: flex; gap: var(--sp-3);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  margin: 0 calc(var(--sp-4) * -1);
+  padding: 2px var(--sp-4);
+  scrollbar-width: none;
+}
+.veil-scroll-x::-webkit-scrollbar { display: none; }
+.veil-scroll-x > * { scroll-snap-align: start; flex: 0 0 auto; }
+
+/* ---- meter bar (insights breakdown) --------------------------- */
+.veil-meter { display: grid; grid-template-columns: 1fr auto; gap: 4px var(--sp-3); align-items: center; }
+.veil-meter__label { font-size: var(--fs-label); color: var(--text-muted); }
+.veil-meter__val { font-size: var(--fs-label); color: var(--text); font-variant-numeric: tabular-nums; }
+.veil-meter__track {
+  grid-column: 1 / -1;
+  height: 6px; border-radius: var(--r-pill);
+  background: var(--surface-2); overflow: hidden;
+}
+.veil-meter__fill { height: 100%; border-radius: inherit; background: var(--accent); }
+.veil-meter + .veil-meter { margin-top: var(--sp-4); }
+
+/* ---- small button size -------------------------------------- */
+.veil-btn--sm { padding: 9px 16px; font-size: var(--fs-label); }
+
+/* ---- fixed bottom dock ------------------------------------- */
+.veil-dock {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  display: flex; justify-content: center;
+  padding: 0 var(--sp-4) calc(env(safe-area-inset-bottom, 0px) + var(--sp-4));
+  z-index: var(--z-sticky);
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--bg) 55%);
+}
+.veil-dock .veil-nav { pointer-events: auto; }
+
+/* ---- screen switch ---------------------------------------- */
+[data-screen] { display: none; }
+[data-screen].is-active { display: block; animation: veil-screen-in var(--dur-base) var(--ease-out); }
+@keyframes veil-screen-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+@media (prefers-reduced-motion: reduce) { [data-screen].is-active { animation: none; } }
+
+/* ---- circular master toggle (Shield) — round .veil-btn--primary ----- */
+.veil-shield-btn {
+  --_size: 132px;
+  --_dur: 3s;
+  position: relative;
+  width: var(--_size);
+  height: var(--_size);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  isolation: isolate;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  background:
+    linear-gradient(var(--surface-1), var(--surface-1)) padding-box,
+    conic-gradient(
+      from calc(var(--veil-ga) - var(--veil-ga-offset)),
+      transparent,
+      var(--accent) var(--veil-gp),
+      var(--veil-shine) calc(var(--veil-gp) * 2),
+      var(--accent) calc(var(--veil-gp) * 3),
+      transparent calc(var(--veil-gp) * 4)
+    ) border-box;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 0 34px var(--accent-glow);
+  transition: box-shadow var(--dur-base) var(--ease-out),
+              translate var(--dur-press) var(--ease-out),
+              filter var(--dur-fast) var(--ease-out),
+              --veil-ga-offset 800ms var(--ease-out),
+              --veil-gp 800ms var(--ease-out);
+}
+/* halftone dot field — a rotating wedge that reaches from the rim inward
+   to the shield glyph. Sits behind the (partly translucent) disc. */
+.veil-shield-btn::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  translate: -50% -50%;
+  z-index: -1;
+  --_pos: 2px;
+  --_space: calc(var(--_pos) * 2);
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  background: radial-gradient(
+    circle at var(--_pos) var(--_pos),
+    var(--accent-shine) calc(var(--_pos) / 3), transparent 0
+  ) padding-box;
+  background-size: var(--_space) var(--_space);
+  background-repeat: space;
+  mask-image: conic-gradient(from calc(var(--veil-ga) + 45deg), #000, transparent 17% 83%, #000);
+  border-radius: inherit;
+  opacity: 0.5;
+}
+.veil-shield-btn,
+.veil-shield-btn::before,
+.veil-shield-btn__disc::before {
+  animation: veil-gradient-angle linear infinite var(--_dur);
+}
+
+/* interior: flat dark, no green fill */
+.veil-shield-btn__disc {
+  position: relative;
+  overflow: hidden;
+  width: calc(var(--_size) - 24px);
+  height: calc(var(--_size) - 24px);
+  border-radius: var(--r-pill);
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 40%, #0c1119, #060809 84%);
+  box-shadow: inset 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+/* dot wedge across the disc face — reaches from the rim up to the glyph.
+   masked by (rotating wedge) ∩ (radial: none at centre → full by mid-radius) */
+.veil-shield-btn__disc::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  --_pos: 2px;
+  --_space: calc(var(--_pos) * 2);
+  background: radial-gradient(
+    circle at var(--_pos) var(--_pos),
+    var(--accent-shine) calc(var(--_pos) / 3), transparent 0
+  );
+  background-size: var(--_space) var(--_space);
+  background-repeat: space;
+  border-radius: inherit;
+  opacity: 0.5;
+  mask-image:
+    conic-gradient(from calc(var(--veil-ga) + 45deg), #000, transparent 18% 82%, #000),
+    radial-gradient(circle at 50% 50%, transparent 20%, #000 56%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.veil-shield-btn svg {
+  width: 46px; height: 46px;
+  color: var(--accent);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.veil-shield-btn:active { translate: 0 1px; }
+.veil-shield-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.veil-shield-btn:is(:hover, :focus-visible) { --veil-gp: 18%; --veil-ga-offset: 90deg; filter: brightness(1.05); }
+
+/* OFF — ring + dots + surrounding light all stop; interior stays dark */
+.veil-shield-btn[aria-pressed="false"] {
+  background:
+    linear-gradient(var(--surface-1), var(--surface-1)) padding-box,
+    conic-gradient(from 0deg, var(--border-strong), var(--surface-3)) border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  filter: saturate(0.4);
+}
+.veil-shield-btn[aria-pressed="false"],
+.veil-shield-btn[aria-pressed="false"]::before,
+.veil-shield-btn[aria-pressed="false"] .veil-shield-btn__disc::before { animation: none; }
+.veil-shield-btn[aria-pressed="false"]::before,
+.veil-shield-btn[aria-pressed="false"] .veil-shield-btn__disc::before { opacity: 0; }
+.veil-shield-btn[aria-pressed="false"] svg { color: var(--text-faint); }
+
+@media (prefers-reduced-motion: reduce) {
+  .veil-shield-btn,
+  .veil-shield-btn::before,
+  .veil-shield-btn__disc::before { animation: none !important; }
+  .veil-shield-btn { --veil-gp: 16%; --veil-ga-offset: 90deg; }
+}

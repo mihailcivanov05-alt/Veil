@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" data-veil>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Veil — Design System v2.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,450;14..32,550;14..32,620;14..32,720&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="tokens.css" />
+<link rel="stylesheet" href="veil-ui.css" />
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: var(--sp-16) var(--sp-6) var(--sp-16); }
+  header.ds { margin-bottom: var(--sp-12); }
+  header.ds .veil-chip { margin-bottom: var(--sp-4); }
+  h1 { font-size: var(--fs-h1); font-weight: var(--fw-bold); letter-spacing: var(--tr-h1); margin: 0 0 var(--sp-2); }
+  header.ds p { color: var(--text-muted); margin: 0; max-width: 60ch; }
+
+  section { margin-top: var(--sp-16); }
+  .sec-head { display: flex; align-items: baseline; gap: var(--sp-3); margin-bottom: var(--sp-5); padding-bottom: var(--sp-3); border-bottom: 1px solid var(--border); }
+  .sec-head h2 { font-size: var(--fs-h2); font-weight: var(--fw-semibold); letter-spacing: var(--tr-h2); margin: 0; }
+  .sec-head span { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--tr-caption); color: var(--text-faint); }
+
+  .grid { display: grid; gap: var(--sp-3); }
+  .grid--swatch { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .swatch { border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; background: var(--surface-1); }
+  .swatch__chip { height: 68px; }
+  .swatch__meta { padding: 10px 12px; }
+  .swatch__name { font-size: var(--fs-caption); font-weight: var(--fw-medium); color: var(--text); }
+  .swatch__hex { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); }
+
+  .row { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: center; }
+  .stack { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+  .type-row { display: flex; align-items: baseline; gap: var(--sp-4); padding: var(--sp-3) 0; border-bottom: 1px solid var(--border); }
+  .type-row .tag { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); min-width: 130px; }
+
+  table.motion { width: 100%; border-collapse: collapse; font-size: var(--fs-label); }
+  table.motion th, table.motion td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  table.motion th { font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: var(--tr-caption); color: var(--text-faint); font-weight: var(--fw-medium); }
+  table.motion td:first-child { font-family: var(--font-mono); font-size: 11px; color: var(--text); }
+
+  .note { margin-top: var(--sp-4); padding: var(--sp-3) var(--sp-4); border-radius: var(--r-sm); background: var(--accent-surface); border: 1px solid var(--accent-line); color: var(--text-muted); font-size: var(--fs-label); }
+
+  /* scoped shield preview (not fixed) */
+  .shield-preview { position: relative; height: 340px; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--border); }
+  .shield-preview .veil-shield { position: absolute; }
+
+  .demo-card { max-width: 380px; }
+  .demo-card .veil-stat__value { font-size: 30px; }
+  .spacer { height: 1px; }
+</style>
+</head>
+<body>
+<div class="wrap" data-veil>
+
+  <header class="ds">
+    <span class="veil-chip veil-chip--accent">v2.0 · 2026-09</span>
+    <h1>Veil Design System</h1>
+    <p>OLED-dark + glassmorphism, retuned to the brighter spring-green from the reference screenshots. One token set drives both the companion dashboard and the in-page shield UI the userscript injects. Import <code>tokens.css</code> then <code>veil-ui.css</code>.</p>
+  </header>
+
+  <!-- ================= COLOR ================= -->
+  <section>
+    <div class="sec-head"><h2>Accent</h2><span>brand green — retuned</span></div>
+    <div class="grid grid--swatch">
+      <div class="swatch"><div class="swatch__chip" style="background:var(--accent)"></div><div class="swatch__meta"><div class="swatch__name">--accent</div><div class="swatch__hex">#17d861</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--accent-hover)"></div><div class="swatch__meta"><div class="swatch__name">--accent-hover</div><div class="swatch__hex">#33e675</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--accent-press)"></div><div class="swatch__meta"><div class="swatch__name">--accent-press</div><div class="swatch__hex">#0fb94f</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--accent-deep)"></div><div class="swatch__meta"><div class="swatch__name">--accent-deep</div><div class="swatch__hex">#0a7d38</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--accent-surface)"></div><div class="swatch__meta"><div class="swatch__name">--accent-surface</div><div class="swatch__hex">23,216,97 / .09</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--accent-shine)"></div><div class="swatch__meta"><div class="swatch__name">--accent-shine</div><div class="swatch__hex">#d8ffe8</div></div></div>
+    </div>
+
+    <div class="sec-head" style="margin-top:var(--sp-8)"><h2>Neutrals &amp; Text</h2><span>OLED ground</span></div>
+    <div class="grid grid--swatch">
+      <div class="swatch"><div class="swatch__chip" style="background:var(--bg)"></div><div class="swatch__meta"><div class="swatch__name">--bg</div><div class="swatch__hex">#05070a</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--surface-1)"></div><div class="swatch__meta"><div class="swatch__name">--surface-1</div><div class="swatch__hex">#0c0f14</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--surface-2)"></div><div class="swatch__meta"><div class="swatch__name">--surface-2</div><div class="swatch__hex">#141821</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--surface-3)"></div><div class="swatch__meta"><div class="swatch__name">--surface-3</div><div class="swatch__hex">#1c212c</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--text)"></div><div class="swatch__meta"><div class="swatch__name">--text</div><div class="swatch__hex">#f4f7fb</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--text-muted)"></div><div class="swatch__meta"><div class="swatch__name">--text-muted</div><div class="swatch__hex">#9aa3b2 · 7:1</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--text-faint)"></div><div class="swatch__meta"><div class="swatch__name">--text-faint</div><div class="swatch__hex">#6b7482 · captions</div></div></div>
+      <div class="swatch"><div class="swatch__chip" style="background:var(--danger)"></div><div class="swatch__meta"><div class="swatch__name">--danger</div><div class="swatch__hex">#ff4d4f</div></div></div>
+    </div>
+  </section>
+
+  <!-- ================= TYPE ================= -->
+  <section>
+    <div class="sec-head"><h2>Typography</h2><span>Inter · tabular-nums for figures</span></div>
+    <div class="type-row"><span class="tag">--fs-display 34/700</span><span style="font-size:var(--fs-display);line-height:var(--lh-display);letter-spacing:var(--tr-display);font-weight:var(--fw-bold);font-variant-numeric:tabular-nums">$5,535.50</span></div>
+    <div class="type-row"><span class="tag">--fs-h1 24/720</span><span style="font-size:var(--fs-h1);letter-spacing:var(--tr-h1);font-weight:var(--fw-bold)">Send Money</span></div>
+    <div class="type-row"><span class="tag">--fs-h2 19/620</span><span style="font-size:var(--fs-h2);letter-spacing:var(--tr-h2);font-weight:var(--fw-semibold)">Transactions</span></div>
+    <div class="type-row"><span class="tag">--fs-title 16/550</span><span style="font-size:var(--fs-title);font-weight:var(--fw-medium)">Emily Smith</span></div>
+    <div class="type-row"><span class="tag">--fs-body 14/450</span><span style="font-size:var(--fs-body)">Opening a shared Reel is fine. Swiping into the feed is blocked.</span></div>
+    <div class="type-row"><span class="tag">--fs-caption 11/550</span><span style="font-size:var(--fs-caption);text-transform:uppercase;letter-spacing:var(--tr-caption);color:var(--text-faint)">Total Balance</span></div>
+  </section>
+
+  <!-- ================= BUTTONS ================= -->
+  <section>
+    <div class="sec-head"><h2>Buttons</h2><span>shiny animation = primary CTA only</span></div>
+    <div class="row">
+      <button class="veil-btn veil-btn--primary"><span class="veil-btn__label">Get unlimited access</span></button>
+      <button class="veil-btn veil-btn--primary veil-btn--solid"><span class="veil-btn__label">Send Money</span></button>
+    </div>
+    <div class="row" style="margin-top:var(--sp-4)">
+      <button class="veil-btn veil-btn--secondary"><span class="veil-btn__label">See all</span></button>
+      <button class="veil-btn veil-btn--ghost"><span class="veil-btn__label">Cancel</span></button>
+      <button class="veil-btn veil-btn--icon" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <button class="veil-btn veil-btn--danger veil-btn--solid"><span class="veil-btn__label">Delete account</span></button>
+      <button class="veil-btn veil-btn--secondary" disabled><span class="veil-btn__label">Disabled</span></button>
+    </div>
+    <div class="note">Primary carries the animated conic ring + halftone sweep + breathing glow (recolored strictly to <code>--accent</code>). Secondary / ghost / icon reuse the same pill shape, dual-gradient border and <code>:active</code> press — statically. <code>prefers-reduced-motion</code> freezes the ring at a fixed angle so it still reads as shiny without motion.</div>
+  </section>
+
+  <!-- ================= SURFACES ================= -->
+  <section>
+    <div class="sec-head"><h2>Surfaces</h2><span>glass · card · stat · chip · segmented · input</span></div>
+    <div class="stack">
+      <div class="veil-glass demo-card">
+        <div class="row" style="justify-content:space-between;align-items:flex-start">
+          <div class="veil-stat__label">Total Balance</div>
+          <div class="veil-segmented">
+            <button class="veil-segmented__item">Week</button>
+            <button class="veil-segmented__item" aria-selected="true">Month</button>
+            <button class="veil-segmented__item">Year</button>
+          </div>
+        </div>
+        <div class="veil-stat__value">$5,535.50</div>
+        <div class="veil-stat__delta">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+          +7.05% Today
+        </div>
+      </div>
+
+      <div class="row">
+        <span class="veil-chip">Neutral</span>
+        <span class="veil-chip veil-chip--accent">Shared reel</span>
+        <span class="veil-chip veil-chip--danger">Shorts shelf</span>
+      </div>
+
+      <input class="veil-input demo-card" type="text" placeholder="Search creators…" aria-label="Search creators" />
+
+      <nav class="veil-nav" aria-label="Primary">
+        <button class="veil-nav__item" aria-current="page" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 10v10h14V10"/></svg></button>
+        <button class="veil-nav__item" aria-label="Insights"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+        <button class="veil-nav__item" aria-label="Cards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg></button>
+        <button class="veil-nav__item" aria-label="Alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
+      </nav>
+    </div>
+  </section>
+
+  <!-- ================= SHIELD ================= -->
+  <section>
+    <div class="sec-head"><h2>Shield overlay</h2><span>userscript fail-safe — Invariant 3</span></div>
+    <div class="shield-preview">
+      <div class="veil-shield">
+        <div class="veil-shield__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <h2>Scroll Locked</h2>
+        <p>You opened one specific Reel. Swiping into the feed is blocked to protect your focus.</p>
+        <button class="veil-btn veil-btn--primary veil-btn--solid"><span class="veil-btn__label">Return to Safety</span></button>
+      </div>
+    </div>
+    <div class="note">Icon is an inline SVG (no emoji — <code>ui-ux-pro-max</code> rule). Heading uses <code>--danger</code>; action is the solid primary CTA in <code>--accent</code>. This markup mirrors <code>veil_shield.user.js §4</code>; the userscript inlines the same declarations since it can't <code>@import</code> a local file into instagram.com / m.youtube.com.</div>
+  </section>
+
+  <!-- ================= APP PRIMITIVES ================= -->
+  <section>
+    <div class="sec-head"><h2>App primitives</h2><span>companion dashboard · see /app/index.html</span></div>
+    <div class="stack">
+      <div class="row" style="gap:var(--sp-8); align-items:center">
+        <div>
+          <button class="veil-shield-btn" aria-pressed="true" aria-label="Shield on">
+            <span class="veil-shield-btn__disc">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+            </span>
+          </button>
+        </div>
+        <div>
+          <button class="veil-shield-btn" aria-pressed="false" aria-label="Shield off">
+            <span class="veil-shield-btn__disc">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>
+            </span>
+          </button>
+        </div>
+        <span class="faint" style="font-size:var(--fs-label)">.veil-shield-btn — circular master toggle, [aria-pressed]. ON = green conic ring + breathing glow; OFF = muted ring, grey glyph, no motion</span>
+      </div>
+      <div class="row" style="gap:var(--sp-6)">
+        <div class="veil-switch" role="switch" aria-checked="true" tabindex="0"></div>
+        <div class="veil-switch" role="switch" aria-checked="false" tabindex="0"></div>
+        <span class="faint" style="font-size:var(--fs-label)">.veil-switch — spring thumb, green track</span>
+      </div>
+      <div class="veil-card" style="padding-top:var(--sp-2);padding-bottom:var(--sp-2);max-width:380px">
+        <div class="veil-row">
+          <div class="veil-row__icon veil-row__icon--accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+          <div class="veil-row__body"><div class="veil-row__title">Reels tab blocked</div><div class="veil-row__sub">Instagram · nav</div></div>
+          <div class="veil-row__meta">2m ago</div>
+        </div>
+        <div class="veil-row">
+          <div class="veil-row__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+          <div class="veil-row__body"><div class="veil-row__title">Short redirected to player</div><div class="veil-row__sub">YouTube · /shorts → /watch</div></div>
+          <div class="veil-row__meta">18m ago</div>
+        </div>
+      </div>
+      <div class="veil-card" style="max-width:380px">
+        <div class="veil-meter"><span class="veil-meter__label">Reels tab</span><span class="veil-meter__val">526</span><div class="veil-meter__track"><div class="veil-meter__fill" style="width:41%"></div></div></div>
+        <div class="veil-meter"><span class="veil-meter__label">Explore grid</span><span class="veil-meter__val">283</span><div class="veil-meter__track"><div class="veil-meter__fill" style="width:22%"></div></div></div>
+      </div>
+    </div>
+    <div class="note"><code>.veil-shield-btn</code>, <code>.veil-switch</code>, <code>.veil-row</code>, <code>.veil-meter</code>, <code>.veil-quick</code>, <code>.veil-scroll-x</code>, <code>.veil-topbar</code>, <code>.veil-dock</code> and the <code>[data-screen]</code> switch live in <code>veil-ui.css</code> under "APP SHELL". The dashboard at <code>app/index.html</code> writes <code>localStorage["veil:config"]</code> in the exact shape <code>veil_shield.user.js</code> reads.</div>
+  </section>
+
+  <!-- ================= MOTION ================= -->
+  <section>
+    <div class="sec-head"><h2>Motion</h2><span>emil-design-eng — strong curves, sub-300ms UI</span></div>
+    <table class="motion">
+      <thead><tr><th>Token</th><th>Value</th><th>Use</th></tr></thead>
+      <tbody>
+        <tr><td>--ease-out</td><td>cubic-bezier(.23,1,.32,1)</td><td>enter/exit, hover, press — the default</td></tr>
+        <tr><td>--ease-in-out</td><td>cubic-bezier(.77,0,.175,1)</td><td>on-screen movement / morph</td></tr>
+        <tr><td>--ease-drawer</td><td>cubic-bezier(.32,.72,0,1)</td><td>sheets, drawers, the shield</td></tr>
+        <tr><td>--ease-spring</td><td>cubic-bezier(.34,1.56,.64,1)</td><td>toggle thumbs, playful accents</td></tr>
+        <tr><td>--dur-press</td><td>120ms</td><td>button <code>:active</code> feedback</td></tr>
+        <tr><td>--dur-fast</td><td>180ms</td><td>hover, color, small popovers</td></tr>
+        <tr><td>--dur-base</td><td>240ms</td><td>dropdowns, tab switches</td></tr>
+        <tr><td>--dur-slow</td><td>360ms</td><td>modals, the shield overlay</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="spacer"></div>
+</div>
+</body>
+</html>

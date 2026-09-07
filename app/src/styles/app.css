@@ -1,0 +1,66 @@
+/* App-shell layout not covered by the shared design system.
+   Everything visual (colour, type, components) comes from
+   ../../design-system/{tokens,veil-ui}.css */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(60% 42% at 78% 0%, rgba(23, 216, 97, 0.10), transparent 70%),
+    radial-gradient(50% 30% at 0% 12%, rgba(23, 216, 97, 0.05), transparent 70%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+h1, h2, h3 { margin: 0; }
+.muted { color: var(--text-muted); }
+.faint { color: var(--text-faint); }
+.between { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
+
+.screen { animation: veil-screen-in var(--dur-base) var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .screen { animation: none; } }
+
+/* ---- master toggle block ---- */
+.master-wrap { display: flex; flex-direction: column; align-items: center; gap: var(--sp-1); margin: var(--sp-5) 0 var(--sp-6); }
+.master__label { font-size: var(--fs-title); font-weight: var(--fw-semibold); letter-spacing: -0.01em; margin-top: var(--sp-3); }
+.master__status { font-size: var(--fs-caption); color: var(--text-faint); }
+.master__status b { color: var(--accent); font-weight: var(--fw-medium); }
+.master__status.is-paused b { color: var(--warning); }
+
+/* ---- app panel ---- */
+.panels.is-paused { opacity: 0.45; filter: saturate(0.4); transition: opacity var(--dur-base) var(--ease-out); }
+.panel { padding: var(--sp-2) var(--sp-5) var(--sp-4); }
+.panel + .panel { margin-top: var(--sp-4); }
+.panel-head { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3) 0 var(--sp-2); }
+.panel-head__name { flex: 1; font-size: var(--fs-title); font-weight: var(--fw-semibold); letter-spacing: -0.01em; }
+
+.brand { width: 40px; height: 40px; flex-shrink: 0; display: grid; place-items: center; border-radius: var(--r-sm); color: #fff; }
+.brand svg { width: 22px; height: 22px; }
+.brand--ig { background: linear-gradient(135deg, rgba(240,148,51,0.22), rgba(230,104,60,0.20) 40%, rgba(220,39,67,0.22) 70%, rgba(204,35,102,0.22)); border: 1px solid rgba(228,64,95,0.28); }
+.brand--yt { background: rgba(255,0,0,0.14); border: 1px solid rgba(255,0,0,0.28); }
+
+.rule { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-3) 0; flex-wrap: wrap; }
+.rule--stack { flex-direction: column; align-items: stretch; }
+.rule--stack .veil-segmented { align-self: flex-start; }
+.rule + .rule { border-top: 1px solid var(--border); }
+.rule__text { min-width: 0; flex: 1; }
+.rule__title { font-size: var(--fs-label); font-weight: var(--fw-medium); }
+.rule__sub { font-size: var(--fs-caption); color: var(--text-faint); margin-top: 2px; }
+
+/* ---- insights ---- */
+.hero-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-3); }
+.chart { width: 100%; height: auto; display: block; margin-top: var(--sp-4); overflow: visible; }
+.chart-x { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-faint); }
+.mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+.bars { display: flex; align-items: flex-end; gap: 8px; height: 96px; margin-top: var(--sp-4); }
+.bars > i { flex: 1; background: var(--surface-2); border-radius: var(--r-xs) var(--r-xs) 3px 3px; }
+.bars > i.hot { background: var(--accent); }
+
+code { font-family: var(--font-mono); font-size: 0.92em; }

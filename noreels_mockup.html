@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veil — Scroll Shield</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:opsz,wght@14..32,400;14..32,450;14..32,550;14..32,620;14..32,720&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@700&family=Archivo+Black&display=swap" rel="stylesheet">
+  <!-- Veil Design System v2 (canonical). Legacy :root names below are remapped to match. -->
+  <link rel="stylesheet" href="design-system/tokens.css">
+  <link rel="stylesheet" href="design-system/veil-ui.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Veil Design System v2 — see design-system/tokens.css (canonical).
+       Legacy token names kept, remapped to the retuned v2 palette. */
+    :root {
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      --bg-root: #05070a;
+      --bg-surface: #0c0f14;
+      --bg-elevated: #141821;
+      --border-subtle: rgba(255,255,255,0.07);
+      --text-primary: #f4f7fb;
+      --text-secondary: #9aa3b2;
+      --text-tertiary: #6b7482;
+      --accent: #17d861;
+      --accent-hover: #33e675;
+      --accent-muted: #0a7d38;
+      --accent-surface: rgba(23,216,97,0.09);
+      --accent-glow: rgba(23,216,97,0.38);
+      --accent-shine: #d8ffe8;
+      --on-accent: #04160b;
+      --danger: #ff4d4f;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      background: var(--bg-root);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { display: none; }
+    * { scrollbar-width: none; }
+
+    /* ── Layout ── */
+    .main-layout {
+      width: 100%;
+      max-width: 1100px;
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+      margin: 0 auto;
+    }
+    .left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; width: 100%; }
+    .right-panel { flex-shrink: 0; display: flex; justify-content: center; width: 100%; max-width: 320px; }
+
+    @media (max-width: 900px) {
+      .main-layout {
+        flex-direction: column;
+        align-items: center;
+      }
+      .right-panel {
+        max-width: 100%;
+        margin-top: 16px;
+      }
+      .phone-frame {
+        transform: scale(0.95);
+        transform-origin: top center;
+      }
+    }
+
+    /* ── Double-Bezel Cards ── */
+    .card-shell { background: var(--border-subtle); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 1px; }
+    .card-core { background: var(--bg-surface); border-radius: 19px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.03); }
+    .card-shell-sm { background: var(--border-subtle); border: 1px solid var(--border-subtle); border-radius: 14px; padding: 1px; }
+    .card-core-sm { background: var(--bg-elevated); border-radius: 13px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.02); }
+
+    .pressable { transition: transform 160ms var(--ease-out); cursor: pointer; }
+    .pressable:active { transform: scale(0.97); }
+
+    /* ── Scan Button (Global Shield) ── */
+    .scan-btn {
+      position: relative;
+      border-radius: 50%;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .scan-btn-ring {
+      position: absolute; inset: 0; border-radius: inherit; overflow: hidden; z-index: 1;
+    }
+    .scan-btn-ring canvas {
+      width: 100% !important; height: 100% !important;
+      display: block !important; position: absolute !important;
+      inset: 0 !important; border-radius: inherit !important;
+    }
+    .scan-btn-inner {
+      position: relative; z-index: 2;
+      background: linear-gradient(180deg, #0c0e16 0%, #030407 100%);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 4px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
+      transition: box-shadow 200ms var(--ease-out);
+    }
+    .scan-btn:active .scan-btn-inner { box-shadow: inset 0 3px 8px rgba(0,0,0,0.8); }
+
+    /* ── Scan Toggle Switch ── */
+    .scan-toggle { position: relative; width: 52px; height: 28px; flex-shrink: 0; cursor: pointer; }
+    .scan-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .scan-toggle-ring { position: absolute; inset: 0; border-radius: 14px; overflow: hidden; z-index: 1; }
+    .scan-toggle-ring canvas { width: 100% !important; height: 100% !important; display: block !important; position: absolute !important; inset: 0 !important; border-radius: 14px !important; }
+    .scan-toggle-track { position: absolute; inset: 2px; border-radius: 12px; z-index: 2; background: #08090e; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); transition: background-color 250ms var(--ease-out), box-shadow 250ms var(--ease-out); }
+    .scan-toggle-thumb { position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 10px; z-index: 3; background: #3a3e50; box-shadow: 0 1px 3px rgba(0,0,0,0.4); transition: transform 250ms var(--ease-spring), background-color 250ms var(--ease-out), box-shadow 250ms var(--ease-out); }
+
+    input:checked ~ .scan-toggle-thumb { transform: translateX(24px); background: var(--accent); box-shadow: 0 0 8px rgba(23,216,97,0.4), 0 1px 3px rgba(0,0,0,0.3); }
+
+    .scan-toggle.force-off .scan-toggle-track { background: #08090e !important; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5) !important; }
+    .scan-toggle.force-off .scan-toggle-thumb { background: #222 !important; box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; transform: translateX(0) !important; }
+    .scan-toggle.force-off { opacity: 0.3; pointer-events: none; }
+
+    .status-dot { width: 6px; height: 6px; border-radius: 3px; flex-shrink: 0; }
+    .status-dot-on { background: var(--accent); box-shadow: 0 0 6px rgba(23,216,97,0.5); }
+    .status-dot-off { background: var(--text-tertiary); }
+
+    /* ── Stagger entry ── */
+    @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .stagger { opacity: 0; animation: fadeSlideUp 500ms var(--ease-out) forwards; }
+
+    .font-mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; }
+
+    /* ── Phone ── */
+    .phone-frame { box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 25px 50px -12px rgba(0,0,0,0.8); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stagger { animation: none; opacity: 1; }
+      .pressable:active { transform: none; }
+      .scan-toggle-thumb { transition: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- DASHBOARD + SIMULATOR                                             -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<section id="dashboard" style="
+  width: 100%; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 48px 24px;
+  background: var(--bg-root);
+">
+<div class="main-layout">
+
+  <!-- LEFT: CONTROLS -->
+  <div class="left-panel">
+
+    <!-- Header -->
+    <div class="stagger" style="animation-delay: 0ms; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 40px; height: 40px; border-radius: 12px; background: var(--accent-surface); border: 1px solid rgba(23,216,97,0.12); display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <h1 style="font-size: 18px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2;">Veil</h1>
+          <p style="font-size: 11px; color: var(--text-secondary); font-weight: 500;">Scroll shield</p>
+        </div>
+      </div>
+      <span class="font-mono" style="font-size: 9px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); background: var(--bg-elevated); border: 1px solid var(--border-subtle); padding: 4px 10px; border-radius: 6px;">v1.0</span>
+    </div>
+
+    <!-- GLOBAL SHIELD -->
+    <div class="stagger card-shell" style="animation-delay: 60ms;">
+      <div class="card-core" style="padding: 32px; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+        <div class="scan-btn pressable" id="global-btn" onclick="toggleGlobal()" style="width: 120px; height: 120px;">
+          <div class="scan-btn-ring"><canvas id="shield-canvas"></canvas></div>
+          <div class="scan-btn-inner" style="width: 114px; height: 114px;">
+            <svg id="shield-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent); transition: color 300ms var(--ease-out);">
+              <path stroke="currentColor" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            <span id="shield-label" class="font-mono" style="font-size: 8px; font-weight: 500; letter-spacing: 0.15em; color: var(--accent); text-transform: uppercase; transition: color 300ms var(--ease-out);">Active</span>
+          </div>
+        </div>
+        <div style="text-align: center;">
+          <p style="font-size: 14px; font-weight: 700; letter-spacing: -0.01em;">Global shield</p>
+          <p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; max-width: 240px; line-height: 1.5;">Tap to engage or disengage all blocking rules.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- METRICS -->
+    <div class="stagger" style="animation-delay: 120ms; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div class="card-shell-sm"><div class="card-core-sm" style="padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <div>
+          <p class="font-mono" style="font-size: 9px; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase;">Time saved</p>
+          <p style="font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;" id="metric-time">0 min</p>
+        </div>
+      </div></div>
+      <div class="card-shell-sm"><div class="card-core-sm" style="padding: 14px 16px; display: flex; align-items: center; gap: 10px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        <div>
+          <p class="font-mono" style="font-size: 9px; color: var(--text-tertiary); letter-spacing: 0.06em; text-transform: uppercase;">Blocked</p>
+          <p style="font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;" id="metric-blocked">0</p>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- INSTAGRAM -->
+    <div class="stagger card-shell" style="animation-delay: 180ms;">
+      <div class="card-core" style="padding: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid var(--border-subtle);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            <div>
+              <p style="font-size: 13px; font-weight: 700;">Instagram</p>
+              <div style="display: flex; align-items: center; gap: 5px; margin-top: 2px;">
+                <div class="status-dot status-dot-on" id="ig-dot"></div>
+                <span class="font-mono" id="ig-label" style="font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent);">Protected</span>
+              </div>
+            </div>
+          </div>
+          <label class="scan-toggle pressable" id="toggle-ig-wrap">
+            <input type="checkbox" id="app-ig" checked onchange="syncRules()">
+            <div class="scan-toggle-ring"><canvas class="tc"></canvas></div>
+            <div class="scan-toggle-track"></div>
+            <div class="scan-toggle-thumb"></div>
+          </label>
+        </div>
+        <div style="display: grid; gap: 8px; margin-top: 14px;">
+          <div class="card-shell-sm"><div class="card-core-sm" style="padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div><p style="font-size: 12px; font-weight: 600;">Hide Reels tab</p><p style="font-size: 10px; color: var(--text-tertiary); margin-top: 1px;">Remove navigation icon</p></div>
+            <label class="scan-toggle pressable" style="width: 44px; height: 24px;" id="toggle-ig-tab-wrap">
+              <input type="checkbox" id="rule-ig-tab" checked onchange="syncRules()">
+              <div class="scan-toggle-ring" style="border-radius: 12px;"><canvas class="tc" style="border-radius: 12px !important;"></canvas></div>
+              <div class="scan-toggle-track" style="border-radius: 10px;"></div>
+              <div class="scan-toggle-thumb" style="width: 16px; height: 16px; border-radius: 8px;"></div>
+            </label>
+          </div></div>
+          <div class="card-shell-sm"><div class="card-core-sm" style="padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div><p style="font-size: 12px; font-weight: 600;">Blackout Explore</p><p style="font-size: 10px; color: var(--text-tertiary); margin-top: 1px;">Clear recommended grid</p></div>
+            <label class="scan-toggle pressable" style="width: 44px; height: 24px;" id="toggle-ig-explore-wrap">
+              <input type="checkbox" id="rule-ig-explore" checked onchange="syncRules()">
+              <div class="scan-toggle-ring" style="border-radius: 12px;"><canvas class="tc" style="border-radius: 12px !important;"></canvas></div>
+              <div class="scan-toggle-track" style="border-radius: 10px;"></div>
+              <div class="scan-toggle-thumb" style="width: 16px; height: 16px; border-radius: 8px;"></div>
+            </label>
+          </div></div>
+          <div class="card-shell-sm"><div class="card-core-sm" style="padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div><p style="font-size: 12px; font-weight: 600;">Lock shared reels</p><p style="font-size: 10px; color: var(--text-tertiary); margin-top: 1px;">Block vertical swipe in DMs</p></div>
+            <label class="scan-toggle pressable" style="width: 44px; height: 24px;" id="toggle-ig-dm-wrap">
+              <input type="checkbox" id="rule-ig-dm" checked onchange="syncRules()">
+              <div class="scan-toggle-ring" style="border-radius: 12px;"><canvas class="tc" style="border-radius: 12px !important;"></canvas></div>
+              <div class="scan-toggle-track" style="border-radius: 10px;"></div>
+              <div class="scan-toggle-thumb" style="width: 16px; height: 16px; border-radius: 8px;"></div>
+            </label>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- YOUTUBE -->
+    <div class="stagger card-shell" style="animation-delay: 240ms;">
+      <div class="card-core" style="padding: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid var(--border-subtle);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 00-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 00-1.94 2A29 29 0 001 11.75a29 29 0 00.46 5.33A2.78 2.78 0 003.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 001.94-2 29 29 0 00.46-5.25 29 29 0 00-.46-5.43z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
+            <div>
+              <p style="font-size: 13px; font-weight: 700;">YouTube</p>
+              <div style="display: flex; align-items: center; gap: 5px; margin-top: 2px;">
+                <div class="status-dot status-dot-on" id="yt-dot"></div>
+                <span class="font-mono" id="yt-label" style="font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent);">Protected</span>
+              </div>
+            </div>
+          </div>
+          <label class="scan-toggle pressable" id="toggle-yt-wrap">
+            <input type="checkbox" id="app-yt" checked onchange="syncRules()">
+            <div class="scan-toggle-ring"><canvas class="tc"></canvas></div>
+            <div class="scan-toggle-track"></div>
+            <div class="scan-toggle-thumb"></div>
+          </label>
+        </div>
+        <div style="display: grid; gap: 8px; margin-top: 14px;">
+          <div class="card-shell-sm"><div class="card-core-sm" style="padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div><p style="font-size: 12px; font-weight: 600;">Hide Shorts tab</p><p style="font-size: 10px; color: var(--text-tertiary); margin-top: 1px;">Remove from pivot bar</p></div>
+            <label class="scan-toggle pressable" style="width: 44px; height: 24px;">
+              <input type="checkbox" id="rule-yt-tab" checked onchange="syncRules()">
+              <div class="scan-toggle-ring" style="border-radius: 12px;"><canvas class="tc" style="border-radius: 12px !important;"></canvas></div>
+              <div class="scan-toggle-track" style="border-radius: 10px;"></div>
+              <div class="scan-toggle-thumb" style="width: 16px; height: 16px; border-radius: 8px;"></div>
+            </label>
+          </div></div>
+          <div class="card-shell-sm"><div class="card-core-sm" style="padding: 10px 14px; display: flex; align-items: center; justify-content: space-between;">
+            <div><p style="font-size: 12px; font-weight: 600;">Strip Shorts shelves</p><p style="font-size: 10px; color: var(--text-tertiary); margin-top: 1px;">Remove from home feed</p></div>
+            <label class="scan-toggle pressable" style="width: 44px; height: 24px;">
+              <input type="checkbox" id="rule-yt-shelves" checked onchange="syncRules()">
+              <div class="scan-toggle-ring" style="border-radius: 12px;"><canvas class="tc" style="border-radius: 12px !important;"></canvas></div>
+              <div class="scan-toggle-track" style="border-radius: 10px;"></div>
+              <div class="scan-toggle-thumb" style="width: 16px; height: 16px; border-radius: 8px;"></div>
+            </label>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: PHONE -->
+  <div class="right-panel">
+    <div class="stagger phone-frame" style="animation-delay: 100ms; flex-shrink: 0; width: 280px; height: 590px; border: 5px solid #1a1a1a; border-radius: 52px; background: #000; position: relative; overflow: hidden; display: flex; flex-direction: column;">
+      <div style="position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 76px; height: 16px; background: #000; border-radius: 20px; z-index: 50;"></div>
+      <div style="height: 32px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 10px; font-weight: 600; color: #fff; z-index: 40; background: rgba(0,0,0,0.85);"><span>9:41</span><div style="display: flex; gap: 4px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.24 4.24 0 00-6 0zm-4-4l2 2a7.07 7.07 0 0110 0l2-2C15.68 9.68 8.32 9.68 5 13z"/></svg>
+        <svg width="16" height="12" viewBox="0 0 28 14" fill="none"><rect x=".5" y=".5" width="23" height="13" rx="3" stroke="white" stroke-opacity=".4"/><rect x="2" y="2" width="16" height="10" rx="2" fill="white"/></svg>
+      </div></div>
+      <div style="flex: 1; position: relative; overflow: hidden; color: #fff; font-size: 12px; user-select: none; display: flex; flex-direction: column;">
+        <!-- IG -->
+        <div id="screen-ig" style="position: absolute; inset: 0; display: flex; flex-direction: column;">
+          <div style="height: 44px; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #000; flex-shrink: 0;">
+            <span id="ig-title" style="font-weight: 800; font-size: 15px; letter-spacing: -0.02em;">Instagram</span>
+            <svg onclick="openDM()" style="cursor: pointer;" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+          </div>
+          <div style="flex: 1; overflow-y: auto; position: relative; background: #000;">
+            <div id="ig-feed" style="padding: 12px;">
+              <div style="border: 1px solid #1a1a1a; border-radius: 16px; padding: 12px; background: #0a0a0a;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;"><div style="width: 24px; height: 24px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #a855f7);"></div><span style="font-weight: 700; font-size: 10px;">friend_post</span></div>
+                <div style="height: 140px; background: #111; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 10px;">Standard feed content</div>
+              </div>
+            </div>
+            <div id="ig-explore" style="display: none; position: absolute; inset: 0; background: #000; padding: 12px; flex-direction: column; gap: 12px;">
+              <input type="text" placeholder="Search creators..." disabled style="width: 100%; background: #111; border: 1px solid #1a1a1a; border-radius: 10px; padding: 8px 12px; font-size: 10px; color: #fff; outline: none;">
+              <div id="ig-explore-clean" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <p style="font-weight: 800; font-size: 12px; margin-top: 10px;">Explore cleaned</p>
+                <p style="font-size: 9px; color: #555; margin-top: 4px; max-width: 180px; line-height: 1.5;">Video grid blacked out.</p>
+              </div>
+              <div id="ig-explore-open" style="display: none; flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; overflow-y: auto;">
+                <div style="height: 90px; background: rgba(139,92,246,0.12); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: rgba(139,92,246,0.4);">Video</div>
+                <div style="height: 90px; background: rgba(59,130,246,0.12); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 9px; color: rgba(59,130,246,0.4);">Video</div>
+              </div>
+            </div>
+            <div id="ig-reel" style="display: none; position: absolute; inset: 0; background: #000; flex-direction: column; justify-content: flex-end; overflow-y: scroll;" onscroll="onReelScroll()">
+              <div style="height: 490px; flex-shrink: 0; padding: 16px; display: flex; flex-direction: column; background: linear-gradient(to top, #000, transparent);">
+                <span class="font-mono" style="font-size: 8px; background: var(--accent); color: #000; padding: 2px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; width: fit-content;">Shared reel</span>
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+              </div>
+              <!-- EXACT broken by design container -->
+              <div id="bbd-container" style="height: 490px; flex-shrink: 0; position: relative; overflow: hidden; background: #000;"></div>
+            </div>
+          </div>
+          <div style="height: 48px; border-top: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-around; background: #000; flex-shrink: 0; z-index: 40; padding-bottom: 4px;">
+            <button onclick="switchTab('feed')" style="background: none; border: none; cursor: pointer; padding: 4px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></button>
+            <button onclick="switchTab('explore')" style="background: none; border: none; cursor: pointer; padding: 4px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+            <button id="ig-nav-reels" style="background: none; border: none; cursor: pointer; padding: 4px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></button>
+            <button style="background: none; border: none; cursor: pointer; padding: 4px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+            <button style="background: none; border: none; cursor: pointer; padding: 4px;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+          </div>
+        </div>
+        <!-- YT -->
+        <div id="screen-yt" style="position: absolute; inset: 0; display: none; flex-direction: column;">
+          <div style="height: 44px; border-bottom: 1px solid #1a1a1a; display: flex; align-items: center; padding: 0 16px; gap: 6px; background: #000; flex-shrink: 0;">
+            <svg width="20" height="14" viewBox="0 0 28 20" fill="#f00"><rect width="28" height="20" rx="6"/><polygon points="11,5 20,10 11,15" fill="#fff"/></svg>
+            <span style="font-weight: 800; font-size: 13px;">YouTube</span>
+          </div>
+          <div style="flex: 1; overflow-y: auto; padding: 12px; background: #000; display: flex; flex-direction: column; gap: 12px;">
+            <div style="border: 1px solid #1a1a1a; border-radius: 16px; padding: 12px; background: #0a0a0a;">
+              <div style="height: 120px; background: #111; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #333; font-size: 10px;">Standard video</div>
+              <p style="font-weight: 800; font-size: 10px; margin-top: 8px;">iOS Development Walkthrough</p>
+            </div>
+            <div id="yt-shorts-shelf" style="border: 1px solid rgba(255,77,79,0.1); border-radius: 16px; padding: 12px; background: rgba(255,77,79,0.03);">
+              <p class="font-mono" style="font-size: 9px; font-weight: 700; color: #ff4d4f; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;">Shorts shelf</p>
+              <div style="display: flex; gap: 8px;"><div style="width: 72px; height: 100px; background: rgba(255,77,79,0.08); border-radius: 10px;"></div><div style="width: 72px; height: 100px; background: rgba(255,77,79,0.08); border-radius: 10px;"></div></div>
+            </div>
+          </div>
+          <div style="height: 48px; border-top: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: space-around; background: #000; flex-shrink: 0; padding-bottom: 4px;">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span style="font-size: 8px; color: #888;">Home</span></div>
+            <div id="yt-nav-shorts" style="display: flex; flex-direction: column; align-items: center; gap: 1px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2z"/></svg><span style="font-size: 8px; color: #888;">Shorts</span></div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><span style="font-size: 8px; color: #888;">Inbox</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="height: 20px; background: #000; display: flex; align-items: center; justify-content: center; z-index: 40;">
+        <div onclick="togglePlatform()" style="width: 96px; height: 4px; background: rgba(255,255,255,0.5); border-radius: 2px; cursor: pointer;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<script src="bbd_injection.js?v=2"></script>
+<script>
+  let globalActive = true;
+  let currentPlatform = 'instagram';
+  let blockedCount = 0;
+  let activeStart = Date.now();
+  let savedMs = 0;
+  let smoothGlobalActive = 1.0;
+
+  // ── Futuristic Scan Shader with Dynamic Color (Red=Inactive, Green=Active) ──
+  function initGL(canvas, sz) {
+    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+    if (!gl) return null;
+    canvas.width = sz; canvas.height = sz;
+    const vs = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vs, 'attribute vec2 a;varying vec2 v;void main(){v=a*.5+.5;gl_Position=vec4(a,0,1);}');
+    gl.compileShader(vs);
+    const fs = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fs, `precision mediump float;
+varying vec2 v;
+uniform float u_t;
+uniform float u_a; // 0.0 = red, 1.0 = green
+
+float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+void main(){
+  float t=u_t;
+  float n1=n(v*5.+t*.3);
+  float n2=n(v*8.-t*.2+50.);
+  vec3 base=mix(vec3(.04,.04,.06),vec3(.10,.10,.14),n1*.5+n2*.5);
+
+  float scanY=fract(t*.15);
+  float scanDist=abs(v.y-scanY);
+  float scanLine=smoothstep(.02,0.,scanDist);
+  float scanGlow=smoothstep(.08,0.,scanDist)*.3;
+
+  vec2 grid=fract(v*30.)-.5;
+  float dot=smoothstep(.35,.3,length(grid));
+  float dotMask=smoothstep(.1,0.,scanDist)*dot*.4;
+
+  // Color mix based on u_a state
+  vec3 actCol = mix(vec3(.8,.1,.1), vec3(.1,.8,.4), u_a);
+  vec3 actGlow = mix(vec3(.4,.05,.05), vec3(.05,.4,.2), u_a);
+  vec3 actDot = mix(vec3(.6,.08,.08), vec3(.08,.6,.3), u_a);
+
+  vec3 col=base;
+  col+=actCol*scanLine*.7;
+  col+=actGlow*scanGlow;
+  col+=actDot*dotMask;
+
+  float spec=smoothstep(.58,.65,n1)*.15;
+  col+=vec3(.3,.3,.35)*spec;
+  gl_FragColor=vec4(col,1.);
+}`);
+    gl.compileShader(fs);
+    const p = gl.createProgram();
+    gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p); gl.useProgram(p);
+    const b = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(p, 'a');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    return { gl, tLoc: gl.getUniformLocation(p, 'u_t'), aLoc: gl.getUniformLocation(p, 'u_a'), canvas };
+  }
+
+  const shieldGl = initGL(document.getElementById('shield-canvas'), 256);
+  const tcs = document.querySelectorAll('.tc');
+  const tGls = [];
+  tcs.forEach(c => tGls.push(initGL(c, 64)));
+
+  let time = 0;
+  function render() {
+    time += 0.016;
+    
+    // Smoothly transition the global active state from 0.0 (red) to 1.0 (green)
+    const targetGlobal = globalActive ? 1.0 : 0.0;
+    smoothGlobalActive += (targetGlobal - smoothGlobalActive) * 0.1;
+
+    if (shieldGl) { 
+      const {gl,tLoc,aLoc} = shieldGl; 
+      gl.viewport(0,0,gl.canvas.width,gl.canvas.height); 
+      gl.uniform1f(tLoc,time); 
+      gl.uniform1f(aLoc, smoothGlobalActive);
+      gl.drawArrays(gl.TRIANGLE_STRIP,0,4); 
+    }
+
+    tGls.forEach(ctx => { 
+      if(!ctx)return; 
+      const{gl,tLoc,aLoc,canvas}=ctx;
+      
+      // Determine individual toggle state
+      const wrap = canvas.closest('.scan-toggle');
+      const input = wrap ? wrap.querySelector('input') : null;
+      let targetToggle = 0.0;
+      if (input) {
+        if (input.id === 'app-ig' || input.id === 'app-yt') {
+          targetToggle = (input.checked && globalActive) ? 1.0 : 0.0;
+        } else if (input.id.startsWith('rule-ig-')) {
+          targetToggle = (input.checked && document.getElementById('app-ig').checked && globalActive) ? 1.0 : 0.0;
+        } else if (input.id.startsWith('rule-yt-')) {
+          targetToggle = (input.checked && document.getElementById('app-yt').checked && globalActive) ? 1.0 : 0.0;
+        }
+      }
+      
+      ctx.smoothA = (ctx.smoothA || 0) + (targetToggle - (ctx.smoothA || 0)) * 0.1;
+
+      gl.viewport(0,0,gl.canvas.width,gl.canvas.height); 
+      gl.uniform1f(tLoc,time); 
+      gl.uniform1f(aLoc, ctx.smoothA);
+      gl.drawArrays(gl.TRIANGLE_STRIP,0,4); 
+    });
+    requestAnimationFrame(render);
+  }
+  render();
+
+  // ── Live metrics ──
+  function updateMetrics() {
+    if (globalActive) {
+      const mins = Math.floor((savedMs + Date.now() - activeStart) / 60000);
+      document.getElementById('metric-time').textContent = mins + ' min';
+    }
+    document.getElementById('metric-blocked').textContent = blockedCount;
+  }
+  setInterval(updateMetrics, 1000);
+
+  // ── Global toggle ──
+  function toggleGlobal() {
+    globalActive = !globalActive;
+    const icon = document.getElementById('shield-icon');
+    const label = document.getElementById('shield-label');
+    if (globalActive) {
+      activeStart = Date.now();
+      icon.innerHTML = '<path stroke="currentColor" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>';
+      icon.style.color = 'var(--accent)'; label.textContent = 'Active'; label.style.color = 'var(--accent)';
+    } else {
+      savedMs += Date.now() - activeStart;
+      icon.innerHTML = '<path stroke="currentColor" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line stroke="currentColor" x1="4" y1="4" x2="20" y2="20"/>';
+      icon.style.color = 'var(--danger)'; label.textContent = 'Inactive'; label.style.color = 'var(--danger)';
+    }
+    syncRules();
+  }
+
+  // ── Sync ──
+  function syncRules() {
+    const igMaster = document.getElementById('app-ig').checked;
+    const ytMaster = document.getElementById('app-yt').checked;
+    const igOn = igMaster && globalActive;
+    const ytOn = ytMaster && globalActive;
+
+    document.getElementById('app-ig').closest('.scan-toggle').classList.toggle('force-off', !globalActive);
+    document.getElementById('app-yt').closest('.scan-toggle').classList.toggle('force-off', !globalActive);
+
+    ['rule-ig-tab', 'rule-ig-explore', 'rule-ig-dm'].forEach(id => {
+      document.getElementById(id).closest('.scan-toggle').classList.toggle('force-off', !igOn);
+    });
+
+    ['rule-yt-tab', 'rule-yt-shelves'].forEach(id => {
+      document.getElementById(id).closest('.scan-toggle').classList.toggle('force-off', !ytOn);
+    });
+
+    const igDot = document.getElementById('ig-dot'), igLbl = document.getElementById('ig-label');
+    igDot.className = igOn ? 'status-dot status-dot-on' : 'status-dot status-dot-off';
+    igLbl.textContent = igOn ? 'Protected' : 'Disabled';
+    igLbl.style.color = igOn ? 'var(--accent)' : 'var(--text-tertiary)';
+
+    const ytDot = document.getElementById('yt-dot'), ytLbl = document.getElementById('yt-label');
+    ytDot.className = ytOn ? 'status-dot status-dot-on' : 'status-dot status-dot-off';
+    ytLbl.textContent = ytOn ? 'Protected' : 'Disabled';
+    ytLbl.style.color = ytOn ? 'var(--accent)' : 'var(--text-tertiary)';
+
+    document.getElementById('ig-nav-reels').style.display = (document.getElementById('rule-ig-tab').checked && igOn) ? 'none' : '';
+    document.getElementById('ig-explore-clean').style.display = (document.getElementById('rule-ig-explore').checked && igOn) ? '' : 'none';
+    document.getElementById('ig-explore-open').style.display = (document.getElementById('rule-ig-explore').checked && igOn) ? 'none' : 'grid';
+    document.getElementById('yt-nav-shorts').style.display = (document.getElementById('rule-yt-tab').checked && ytOn) ? 'none' : '';
+    document.getElementById('yt-shorts-shelf').style.display = (document.getElementById('rule-yt-shelves').checked && ytOn) ? 'none' : '';
+  }
+
+  function togglePlatform() {
+    if (currentPlatform==='instagram') { document.getElementById('screen-ig').style.display='none'; document.getElementById('screen-yt').style.display='flex'; currentPlatform='youtube'; }
+    else { document.getElementById('screen-yt').style.display='none'; document.getElementById('screen-ig').style.display='flex'; currentPlatform='instagram'; }
+    syncRules();
+  }
+
+  function switchTab(t) {
+    document.getElementById('ig-feed').style.display='none'; document.getElementById('ig-explore').style.display='none'; document.getElementById('ig-reel').style.display='none';
+    if(t==='feed'){document.getElementById('ig-feed').style.display='';document.getElementById('ig-title').textContent='Instagram';}
+    else if(t==='explore'){document.getElementById('ig-explore').style.display='flex';document.getElementById('ig-title').textContent='Explore';syncRules();}
+  }
+  function openDM() {
+    document.getElementById('ig-feed').style.display='none'; document.getElementById('ig-explore').style.display='none';
+    document.getElementById('ig-reel').style.display='flex'; document.getElementById('ig-reel').scrollTop=0;
+    document.getElementById('ig-title').textContent='Shared Reel';
+  }
+  
+  function onReelScroll() {
+    const igOn = document.getElementById('app-ig').checked && globalActive;
+    const lock = document.getElementById('rule-ig-dm').checked && igOn;
+    const el = document.getElementById('ig-reel');
+    
+    if (el.scrollTop > 50) {
+      if (lock) {
+        el.scrollTop = 490;
+        if (!window.glassShown) {
+          if (window.showBrokenGlass) {
+             window.showBrokenGlass(document.getElementById('bbd-container'));
+          }
+          window.glassShown = true;
+          blockedCount++; 
+          updateMetrics();
+        }
+      } else {
+        el.scrollTop = 980;
+      }
+    }
+  }
+  
+  function exitReel() {
+    switchTab('feed');
+    const c = document.getElementById('bbd-container');
+    if (c) c.innerHTML = '';
+    window.glassShown = false;
+  }
+
+  syncRules(); updateMetrics();
+</script>
+</body>
+</html>

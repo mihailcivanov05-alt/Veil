@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+app/node_modules/
+
+# build output
+dist/
+app/dist/
+*.tsbuildinfo
+
+# local env / tooling
+*.local
+.vercel/
+.claude/
+.DS_Store
+
+# skills toolbox (local reference only — not part of Veil)
+Skills/
