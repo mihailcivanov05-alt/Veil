@@ -64,3 +64,28 @@ h1, h2, h3 { margin: 0; }
 .bars > i.hot { background: var(--accent); }
 
 code { font-family: var(--font-mono); font-size: 0.92em; }
+
+/* ---- sync to safari ---- */
+.sync-steps { margin: var(--sp-4) 0 0; padding-left: 1.25em; display: flex; flex-direction: column; gap: var(--sp-4); font-size: var(--fs-label); }
+.sync-steps li { line-height: var(--lh-body); }
+.sync-steps b { font-weight: var(--fw-semibold); }
+.sync-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-2); }
+.sync-code {
+  width: 100%;
+  margin-top: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  resize: none;
+  word-break: break-all;
+}
+.sync-code:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; color: var(--text); }
+.sync-setup { margin-top: var(--sp-5); border-top: 1px solid var(--border); padding-top: var(--sp-4); }
+.sync-setup summary { cursor: pointer; color: var(--text-muted); font-size: var(--fs-label); font-weight: var(--fw-medium); }
+.sync-setup summary:hover { color: var(--text); }
+.sync-setup ol { margin: var(--sp-3) 0; padding-left: 1.25em; display: flex; flex-direction: column; gap: var(--sp-2); font-size: var(--fs-caption); color: var(--text-muted); }

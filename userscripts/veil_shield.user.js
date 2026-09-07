@@ -72,6 +72,9 @@
   //   localStorage.setItem('veil:config', JSON.stringify({
   //     instagram: { exploreGridMode: 'hide_videos_only' }
   //   }));
+  //
+  // The companion dashboard (Settings -> Sync to Safari) hands you a "Veil Sync"
+  // bookmarklet that does exactly this write from your clipboard, on this origin.
 
   const DEFAULTS = Object.freeze({
     paused: false,                          // global master — companion app "Shield" button

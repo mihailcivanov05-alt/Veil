@@ -114,7 +114,7 @@ export function Home({
         className="faint"
         style={{ fontSize: 'var(--fs-caption)', textAlign: 'center', margin: 'var(--sp-5) 0 0' }}
       >
-        Changes save to <code>veil:config</code> and apply the next time an Instagram or YouTube tab loads.
+        Changes save on this device. Use <b>Settings &rarr; Sync to Safari</b> to push them to the shield.
       </p>
     </div>
   )

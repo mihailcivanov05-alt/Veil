@@ -2,7 +2,7 @@
 
 **Date:** September 2026  
 **Target Platform:** iOS 17+ Safari (iPhone 17 Pro) via Userscripts extension  
-**Project State:** userscript v3.2 (route logic 30/30, ARMED gate 10/10; CSS selectors pending on-device confirmation) · Design System v2 · companion app rebuilt (Home master + IG/YT panels, Insights, Settings).
+**Project State:** userscript v3.2 (route logic 30/30, ARMED gate 10/10; CSS selectors pending on-device confirmation) · Design System v2 · companion app rebuilt (Home master + IG/YT panels, Insights, Settings) · under git → `github.com/mihailcivanov05-alt/Veil`, deployed on Vercel (`vercel.json` builds `app/`) · dashboard↔shield linked by the "Veil Sync" bookmarklet bridge (Settings → Sync to Safari).
 
 ---
 
@@ -71,7 +71,9 @@ No Reels/
 │   ├── index.html  src/  vite.config.ts  tsconfig.json  package.json
 │   │                                  `npm install` then `npm run dev` → http://localhost:5173
 │   │                                  imports ../design-system/*.css directly (server.fs.allow)
+│   ├── src/lib/bridge.ts             ← "Veil Sync" bookmarklet + config payload (cross-origin bridge)
 │   └── legacy-static.html            ← the pre-React single-file version, kept for reference
+├── vercel.json                      ← Vercel build: `cd app && npm install && npm run build` → app/dist
 ├── components/ui/
 │   ├── shiny-button.tsx             ← React drop-in of the primary CTA (stub until a build exists)
 │   └── shiny-button.demo.tsx
@@ -130,14 +132,25 @@ Three screens switched by the bottom `.veil-nav` dock, all on DS v2:
 | :--- | :--- |
 | **Home** | **Master toggle** — a circular `.veil-shield-btn` (green conic ring + breathing glow when on, muted + grey glyph when off) that pauses / resumes the whole shield. Then an **Instagram panel** and a **YouTube panel**, each = brand glyph + name + per-platform pause switch + that platform's rule switches (Explore mode is a segmented control). Every change persists to `localStorage["veil:config"]` immediately. |
 | **Insights** | "Focus reclaimed this week" glass hero + weekly interceptions area chart; all-time count; **by-surface** meter breakdown (Reels tab / Explore grid / Shorts shelves / shared-reel scroll / …); by-platform split; "time not scrolled" estimate; most-blocked insight; **recent interceptions** list |
-| **Settings** | shield-health rows (userscript / extension / Screen Time lock); enforcement note; seconds-per-session estimate input |
+| **Settings** | shield-health rows (userscript / extension / Screen Time lock); **Sync to Safari** (bookmarklet bridge — see below); enforcement note; seconds-per-session estimate input |
 
-**The dashboard drives the shield.** It writes `localStorage["veil:config"]` in the exact
-shape `veil_shield.user.js` `loadConfig()` reads. `paused` (global) and
-`instagram.paused` / `youtube.paused` (per-platform) are **pause flags** — v3.2's
-`ARMED` check reads them and injects nothing when a platform is paused, while every
-individual rule keeps its saved state. Changes apply on the next Instagram / YouTube
-page load.
+**The dashboard drives the shield** — via a manual bridge. It writes
+`localStorage["veil:config"]` in the exact shape `veil_shield.user.js`
+`loadConfig()` reads. `paused` (global) and `instagram.paused` /
+`youtube.paused` (per-platform) are **pause flags** — v3.2's `ARMED` check reads
+them and injects nothing when a platform is paused, while every individual rule
+keeps its saved state.
+
+**Cross-origin bridge.** `localStorage` is per-origin: the dashboard's writes land
+on its own origin (localhost or `*.vercel.app`), not on `instagram.com` /
+`m.youtube.com` where the userscript reads. `app/src/lib/bridge.ts` closes this —
+`Settings → Sync to Safari` shows a compact JSON payload and a one-time "Veil Sync"
+`javascript:` bookmarklet. Flow: copy the payload → in Safari, open Instagram /
+YouTube → tap the bookmark (reads clipboard, falls back to `prompt()`, validates
+shape, writes `veil:config` on that origin, reloads). Changes apply on the next
+page load. Deliberately manual-per-change to keep the zero-backend model; a
+remote-config fetch (`@grant GM.xmlHttpRequest` + a hosted `config.json`) is the
+automatic alternative if the manual step becomes annoying.
 
 ### Deprecated (Pre-Pivot)
 The following files are from the abandoned native injection approach and are kept for reference only:

@@ -14,7 +14,9 @@ export default function App() {
       <main className="veil-screen">
         {screen === 'home' && <Home cfg={cfg} update={update} />}
         {screen === 'insights' && <Insights key="insights" onBack={() => setScreen('home')} />}
-        {screen === 'settings' && <Settings key="settings" onBack={() => setScreen('home')} />}
+        {screen === 'settings' && (
+          <Settings key="settings" cfg={cfg} onBack={() => setScreen('home')} />
+        )}
       </main>
       <Nav current={screen} onNavigate={setScreen} />
     </>
