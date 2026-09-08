@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Veil Shield — No Reels & No Shorts (iOS Safari)
 // @namespace    com.veil.anti-doomscroll
-// @version      3.5.0
+// @version      3.5.1
 // @description  Deterministic Reels & Shorts blocker for iOS Mobile Safari on iPhone.
 //               Preserves DMs, Search, Creator Profiles, and long-form YouTube.
 //               Anchored exclusively on stable href / aria-label / custom-element selectors.
@@ -530,6 +530,22 @@ a[href^="/shorts/"] {
     dmBlackoutShown = false;
   }
 
+  // Stamps live state onto <html> so an external bookmarklet can read it even
+  // if the userscript is sandboxed out of the page's window.
+  function stampDbg() {
+    try {
+      const de = document.documentElement;
+      de.setAttribute('data-veil-v', '3.5.1');
+      de.setAttribute('data-veil-dbg',
+        'armed=' + (ARMED ? 1 : 0) +
+        ' page=' + state.pageType +
+        ' sra=' + (state.isSharedReelActive ? 1 : 0) +
+        ' dm=' + (dmReelArmed ? 1 : 0) +
+        ' pin=' + document.querySelectorAll('[data-veil-pinned]').length +
+        ' black=' + (state.isBlackedOut ? 1 : 0));
+    } catch (e) {}
+  }
+
   function checkDmReelViewer() {
     if (platform !== 'instagram') return;
     const active = location.pathname.startsWith('/direct/') && CONFIG.instagram.blockSharedReelScroll;
@@ -538,6 +554,7 @@ a[href^="/shorts/"] {
         dmReelArmed = false; dmThreadUrl = null; state.isSharedReelActive = false;
         unpinDmScrollers();
       }
+      stampDbg();
       return;
     }
     const vh = innerHeight, vw = innerWidth;
@@ -561,6 +578,7 @@ a[href^="/shorts/"] {
       state.isSharedReelActive = false;
       unpinDmScrollers();
     }
+    stampDbg();
   }
 
   function initTouchLock() {
@@ -744,6 +762,9 @@ a[href^="/shorts/"] {
       initYouTubeClickInterceptor();
     } else if (platform === 'instagram') {
       initTouchLock();
+      // Guaranteed poll — the DM reel feed can advance without a DOM mutation
+      // the observer would catch, so don't rely on sweep() alone.
+      setInterval(() => { if (platform === 'instagram') checkDmReelViewer(); }, 600);
     }
 
     evaluate();
@@ -758,6 +779,35 @@ a[href^="/shorts/"] {
 
     log('active on', platform, '—', state.pageType);
   }
+
+  // ── debug surface (read by the Veil Diag HUD bookmarklet) ──────────────────
+  try {
+    Object.defineProperty(window, '__VEIL', {
+      configurable: true,
+      value: {
+        version: '3.5.1',
+        status: () => ({
+          v: '3.5.1', armed: ARMED, page: state.pageType,
+          isSharedReelActive: state.isSharedReelActive, dmReelArmed,
+          pinned: document.querySelectorAll('[data-veil-pinned]').length,
+          blacked: state.isBlackedOut,
+        }),
+        recheck() { checkDmReelViewer(); return this.status(); },
+        scan() {
+          const vh = innerHeight, vw = innerWidth;
+          const o = { path: location.pathname, vw, vh, fsOnScreen: 0, videos: [] };
+          document.querySelectorAll('video').forEach((v) => {
+            const r = v.getBoundingClientRect();
+            const on = r.top < vh && r.bottom > 0 && r.left < vw && r.right > 0;
+            const fs = r.height > vh * 0.7 && r.width > vw * 0.6;
+            o.videos.push(Math.round(r.width) + 'x' + Math.round(r.height) + (on ? '/on' : '/off') + (fs ? '/FS' : ''));
+            if (on && fs) o.fsOnScreen++;
+          });
+          return o;
+        },
+      },
+    });
+  } catch (e) {}
 
   boot();
 })();
