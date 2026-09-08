@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Veil Shield — No Reels & No Shorts (iOS Safari)
 // @namespace    com.veil.anti-doomscroll
-// @version      3.3.0
+// @version      3.4.0
 // @description  Deterministic Reels & Shorts blocker for iOS Mobile Safari on iPhone.
 //               Preserves DMs, Search, Creator Profiles, and long-form YouTube.
 //               Anchored exclusively on stable href / aria-label / custom-element selectors.
@@ -29,6 +29,12 @@
  * Now: a CAPTURE-phase touchmove on the /reel/{id} permalink preventDefault()s
  * every predominantly-vertical drag (deterministic — no magnitude guess), and
  * the first upward pull raises the blackout once. wheel is locked too.
+ *
+ * v3.4: reels shared into a DM. Tapping one opens a fullscreen vertical video
+ * feed while the URL stays on /direct/t/{id}/ — a whitelisted route, so nothing
+ * ran. checkDmReelViewer() now arms the v3.3 lock when 2+ near-fullscreen
+ * <video>s are present on a /direct/ route (a shape normal messaging can't
+ * produce); the blackout returns to the thread, not out of DMs.
  * ============================================================================
  *
  * Changes from v3.0 (post-review):
@@ -472,6 +478,37 @@ a[href^="/shorts/"] {
   let touchStartY = 0;
   let touchStartX = 0;
   let lockedReelId = null;
+  let dmReelArmed = false;      // fullscreen reel feed open on top of a /direct/ thread
+  let dmThreadUrl = null;       // where to send them back to when it is
+
+  // A reel shared into a DM opens a fullscreen vertical video feed while the URL
+  // stays on /direct/t/{id}/ — the route is whitelisted, so nothing else fires.
+  // Signature that cannot occur during normal messaging: 2+ near-fullscreen
+  // <video>s on a /direct/ route. When present, arm the same scroll lock.
+  function checkDmReelViewer() {
+    if (platform !== 'instagram') return;
+    if (!location.pathname.startsWith('/direct/') || !CONFIG.instagram.blockSharedReelScroll) {
+      if (dmReelArmed) { dmReelArmed = false; dmThreadUrl = null; state.isSharedReelActive = false; }
+      return;
+    }
+    const vh = window.innerHeight, vw = window.innerWidth;
+    let fullscreenVids = 0;
+    document.querySelectorAll('video').forEach((v) => {
+      const r = v.getBoundingClientRect();
+      if (r.height > vh * 0.7 && r.width > vw * 0.6) fullscreenVids++;
+    });
+    const open = fullscreenVids >= 2;
+    if (open && !dmReelArmed) {
+      dmReelArmed = true;
+      dmThreadUrl = location.href;
+      state.isSharedReelActive = true;
+      log('DM reel viewer detected — scroll lock armed');
+    } else if (!open && dmReelArmed) {
+      dmReelArmed = false;
+      dmThreadUrl = null;
+      state.isSharedReelActive = false;
+    }
+  }
 
   function initTouchLock() {
     let announced = false;
@@ -501,8 +538,10 @@ a[href^="/shorts/"] {
           announced = true;
           showBlackout(
             'Scroll Locked',
-            'You opened one specific Reel. Swiping into the feed is blocked to protect your focus.',
-            'https://www.instagram.com/direct/inbox/'
+            dmReelArmed
+              ? 'This Reel was shared in a DM. Watch it — but swiping into the feed is blocked.'
+              : 'You opened one specific Reel. Swiping into the feed is blocked to protect your focus.',
+            dmThreadUrl || 'https://www.instagram.com/direct/inbox/'
           );
         }
       }
@@ -547,9 +586,12 @@ a[href^="/shorts/"] {
     }
 
     // ── Any other page — clear reel lock, lift a stale blackout ──
-    state.isSharedReelActive = false;
     lockedReelId = null;
-    if (state.isBlackedOut) removeBlackout();
+    checkDmReelViewer();                    // a /direct/ thread may have a reel feed open
+    if (!dmReelArmed) {
+      state.isSharedReelActive = false;
+      if (state.isBlackedOut) removeBlackout();
+    }
   }
 
   // ==========================================================================
@@ -567,6 +609,7 @@ a[href^="/shorts/"] {
     }
 
     if (platform === 'instagram') {
+      checkDmReelViewer();                  // fullscreen reel feed opened from a DM
       if (state.pageType === 'direct_messages') return;
       // best-effort: dismiss "open in app" interstitials
       document.querySelectorAll(
