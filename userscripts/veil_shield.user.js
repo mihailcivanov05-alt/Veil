@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Veil Shield — No Reels & No Shorts (iOS Safari)
 // @namespace    com.veil.anti-doomscroll
-// @version      3.4.1
+// @version      3.5.0
 // @description  Deterministic Reels & Shorts blocker for iOS Mobile Safari on iPhone.
 //               Preserves DMs, Search, Creator Profiles, and long-form YouTube.
 //               Anchored exclusively on stable href / aria-label / custom-element selectors.
@@ -37,6 +37,13 @@
  * ran. checkDmReelViewer() now arms the v3.3 lock when 2+ near-fullscreen
  * <video>s are present on a /direct/ route (a shape normal messaging can't
  * produce); the blackout returns to the thread, not out of DMs.
+ *
+ * v3.5: on-device the DM feed ("Suggested") scrolls a native overflow <div>
+ * (scrollTop into the thousands) — preventDefault() on iOS does not stop those.
+ * pinDmScrollers() now sets overflow:hidden + touch-action:none !important on
+ * every scrollable ancestor of the on-screen fullscreen <video>, re-applied
+ * each sweep; a capture-phase scroll listener snaps it back + blackouts if it
+ * moves anyway. Detection relaxed to >=1 on-screen fullscreen video.
  * ============================================================================
  *
  * Changes from v3.0 (post-review):
@@ -482,33 +489,77 @@ a[href^="/shorts/"] {
   let lockedReelId = null;
   let dmReelArmed = false;      // fullscreen reel feed open on top of a /direct/ thread
   let dmThreadUrl = null;       // where to send them back to when it is
+  let dmScrollers = [];         // the native scroll containers we've pinned
+  let dmLockTop = 0;            // scrollTop to hold them at
+  let dmBlackoutShown = false;
 
-  // A reel shared into a DM opens a fullscreen vertical video feed while the URL
-  // stays on /direct/t/{id}/ — the route is whitelisted, so nothing else fires.
-  // Signature that cannot occur during normal messaging: 2+ near-fullscreen
-  // <video>s on a /direct/ route. When present, arm the same scroll lock.
+  // A reel shared into a DM opens IG's fullscreen "Suggested" reel feed while
+  // the URL stays on /direct/t/{id}/ — a whitelisted route, so nothing else
+  // fires. On-device the feed scrolls a native overflow <div> (scrollTop grows
+  // into the thousands); preventDefault() on touch does NOT reliably stop a
+  // native scroll container on iOS, so we pin the element itself.
+  //
+  // Signature that cannot occur during normal messaging: a near-fullscreen
+  // on-screen <video> on a /direct/ route.
+  function pinDmScrollers() {
+    const vh = innerHeight, vw = innerWidth;
+    const vid = Array.prototype.find.call(document.querySelectorAll('video'), (v) => {
+      const r = v.getBoundingClientRect();
+      return r.top < vh && r.bottom > 0 && r.height > vh * 0.7 && r.width > vw * 0.6;
+    });
+    if (!vid) return;
+    dmScrollers = [];
+    for (let n = vid.parentElement; n && n !== document.body; n = n.parentElement) {
+      if (n.scrollHeight > n.clientHeight + 4) {
+        n.style.setProperty('overflow', 'hidden', 'important');
+        n.style.setProperty('touch-action', 'none', 'important');
+        n.setAttribute('data-veil-pinned', '1');
+        dmScrollers.push(n);
+      }
+    }
+    if (dmScrollers.length) dmLockTop = dmScrollers[0].scrollTop;
+  }
+
+  function unpinDmScrollers() {
+    document.querySelectorAll('[data-veil-pinned]').forEach((n) => {
+      n.style.removeProperty('overflow');
+      n.style.removeProperty('touch-action');
+      n.removeAttribute('data-veil-pinned');
+    });
+    dmScrollers = [];
+    dmBlackoutShown = false;
+  }
+
   function checkDmReelViewer() {
     if (platform !== 'instagram') return;
-    if (!location.pathname.startsWith('/direct/') || !CONFIG.instagram.blockSharedReelScroll) {
-      if (dmReelArmed) { dmReelArmed = false; dmThreadUrl = null; state.isSharedReelActive = false; }
+    const active = location.pathname.startsWith('/direct/') && CONFIG.instagram.blockSharedReelScroll;
+    if (!active) {
+      if (dmReelArmed) {
+        dmReelArmed = false; dmThreadUrl = null; state.isSharedReelActive = false;
+        unpinDmScrollers();
+      }
       return;
     }
-    const vh = window.innerHeight, vw = window.innerWidth;
-    let fullscreenVids = 0;
+    const vh = innerHeight, vw = innerWidth;
+    let onScreenFullscreen = 0;
     document.querySelectorAll('video').forEach((v) => {
       const r = v.getBoundingClientRect();
-      if (r.height > vh * 0.7 && r.width > vw * 0.6) fullscreenVids++;
+      if (r.top < vh && r.bottom > 0 && r.left < vw && r.right > 0 &&
+          r.height > vh * 0.7 && r.width > vw * 0.6) onScreenFullscreen++;
     });
-    const open = fullscreenVids >= 2;
-    if (open && !dmReelArmed) {
-      dmReelArmed = true;
-      dmThreadUrl = location.href;
-      state.isSharedReelActive = true;
-      log('DM reel viewer detected — scroll lock armed');
-    } else if (!open && dmReelArmed) {
+    if (onScreenFullscreen >= 1) {
+      if (!dmReelArmed) {
+        dmReelArmed = true;
+        dmThreadUrl = location.href;
+        state.isSharedReelActive = true;
+        log('DM reel viewer detected — scroll lock armed');
+      }
+      pinDmScrollers();                     // re-apply every sweep — IG re-renders
+    } else if (dmReelArmed) {
       dmReelArmed = false;
       dmThreadUrl = null;
       state.isSharedReelActive = false;
+      unpinDmScrollers();
     }
   }
 
@@ -555,6 +606,25 @@ a[href^="/shorts/"] {
       if (CONFIG.instagram.sharedReelTouchBackstop === false) return;
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && Math.abs(e.deltaY) > 4) e.preventDefault();
     }, { capture: true, passive: false });
+
+    // Backstop for the DM "Suggested" feed: if its pinned scroll container
+    // moves anyway, snap it back and blackout. scroll fires in capture phase
+    // on document even though it doesn't bubble.
+    document.addEventListener('scroll', () => {
+      if (!dmReelArmed || !dmScrollers.length) return;
+      const sc = dmScrollers[0];
+      if (Math.abs(sc.scrollTop - dmLockTop) > 40) {
+        dmScrollers.forEach((n) => { n.scrollTop = dmLockTop; });
+        if (!dmBlackoutShown) {
+          dmBlackoutShown = true;
+          showBlackout(
+            'Scroll Locked',
+            'This Reel was shared in a DM. Swiping into the suggested feed is blocked.',
+            dmThreadUrl || 'https://www.instagram.com/direct/inbox/'
+          );
+        }
+      }
+    }, { capture: true, passive: true });
   }
 
   function handleInstagram() {
