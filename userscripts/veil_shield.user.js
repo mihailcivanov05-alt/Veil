@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Veil Shield — No Reels & No Shorts (iOS Safari)
 // @namespace    com.veil.anti-doomscroll
-// @version      3.4.0
+// @version      3.4.1
 // @description  Deterministic Reels & Shorts blocker for iOS Mobile Safari on iPhone.
 //               Preserves DMs, Search, Creator Profiles, and long-form YouTube.
 //               Anchored exclusively on stable href / aria-label / custom-element selectors.
@@ -12,6 +12,8 @@
 // @match        https://youtube.com/*
 // @run-at       document-start
 // @grant        none
+// @updateURL    https://raw.githubusercontent.com/mihailcivanov05-alt/Veil/main/userscripts/veil_shield.user.js
+// @downloadURL  https://raw.githubusercontent.com/mihailcivanov05-alt/Veil/main/userscripts/veil_shield.user.js
 // ==/UserScript==
 
 /*
