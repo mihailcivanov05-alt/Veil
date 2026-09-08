@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Veil Shield — No Reels & No Shorts (iOS Safari)
 // @namespace    com.veil.anti-doomscroll
-// @version      3.2.0
+// @version      3.3.0
 // @description  Deterministic Reels & Shorts blocker for iOS Mobile Safari on iPhone.
 //               Preserves DMs, Search, Creator Profiles, and long-form YouTube.
 //               Anchored exclusively on stable href / aria-label / custom-element selectors.
@@ -22,6 +22,13 @@
  * and `instagram.paused` / `youtube.paused` (per-platform), written by the
  * companion app (app/index.html). Each page load is single-platform, so one
  * ARMED check gates the whole engine — a paused platform injects nothing.
+ *
+ * v3.3: shared-reel scroll lock hardened for IG mobile web. IG's reel viewer
+ * advances the feed without a pushState and consumes touch events on its own
+ * scroller, so the v3.2 bubble-phase 45px-magnitude backstop never fired.
+ * Now: a CAPTURE-phase touchmove on the /reel/{id} permalink preventDefault()s
+ * every predominantly-vertical drag (deterministic — no magnitude guess), and
+ * the first upward pull raises the blackout once. wheel is locked too.
  * ============================================================================
  *
  * Changes from v3.0 (post-review):
@@ -46,10 +53,10 @@
  *
  * Constitution Compliance (GEMINI.md):
  *   Invariant 1 — Deterministic: URL paths + aria-labels + custom-element tags.
- *                 The shared-reel touch backstop is a magnitude heuristic and
- *                 is explicitly subordinate to the URL-change check; toggle it
- *                 off (sharedReelTouchBackstop:false) once device testing
- *                 confirms IG rewrites location on auto-advance.
+ *                 The shared-reel scroll lock (v3.3) blocks every vertical drag
+ *                 on a /reel/{id} permalink in capture phase — no magnitude
+ *                 guess. The URL-change check stays primary; set
+ *                 sharedReelTouchBackstop:false to drop the gesture lock only.
  *   Invariant 2 — Preserve Legitimate: DMs, search, tags, profiles, stories,
  *                 long-form YouTube: never touched.
  *   Invariant 3 — Fail-Safe: unknown / auto-advancing reel feed → blackout.
@@ -463,31 +470,50 @@ a[href^="/shorts/"] {
   // ==========================================================================
 
   let touchStartY = 0;
+  let touchStartX = 0;
   let lockedReelId = null;
 
   function initTouchLock() {
-    let fired = false;
+    let announced = false;
 
+    // Capture phase: IG's reel scroller calls stopPropagation() on its own
+    // touch handlers, so a bubble-phase listener on document never sees the
+    // swipe. Capture runs before any of that.
     document.addEventListener('touchstart', (e) => {
       if (!state.isSharedReelActive) return;
       touchStartY = e.touches[0].clientY;
-      fired = false;
-    }, { passive: true });
+      touchStartX = e.touches[0].clientX;
+      announced = false;
+    }, { capture: true, passive: true });
 
     document.addEventListener('touchmove', (e) => {
-      if (!state.isSharedReelActive || fired) return;
-      if (!CONFIG.instagram.sharedReelTouchBackstop) return;
-      const dy = touchStartY - e.touches[0].clientY;
-      if (dy > 45) {                       // BACKSTOP ONLY — URL-change check in handleInstagram() is primary
-        fired = true;
+      if (!state.isSharedReelActive) return;
+      if (!CONFIG.instagram.blockSharedReelScroll) return;
+      if (CONFIG.instagram.sharedReelTouchBackstop === false) return;
+      const t = e.touches[0];
+      const dy = touchStartY - t.clientY;
+      const dx = touchStartX - t.clientX;
+      // A predominantly-vertical drag on a single-Reel permalink is a feed
+      // swipe. Kill it outright — no magnitude threshold to false-negative on.
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) {
         e.preventDefault();
-        showBlackout(
-          'Scroll Locked',
-          'You opened one specific Reel. Swiping into the feed is blocked to protect your focus.',
-          'https://www.instagram.com/direct/inbox/'
-        );
+        if (!announced && dy > 24) {        // first real upward pull → say why, once
+          announced = true;
+          showBlackout(
+            'Scroll Locked',
+            'You opened one specific Reel. Swiping into the feed is blocked to protect your focus.',
+            'https://www.instagram.com/direct/inbox/'
+          );
+        }
       }
-    }, { passive: false });
+    }, { capture: true, passive: false });
+
+    // trackpad / mouse parity — inert on touch-only iOS, matters if tested elsewhere
+    document.addEventListener('wheel', (e) => {
+      if (!state.isSharedReelActive || !CONFIG.instagram.blockSharedReelScroll) return;
+      if (CONFIG.instagram.sharedReelTouchBackstop === false) return;
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && Math.abs(e.deltaY) > 4) e.preventDefault();
+    }, { capture: true, passive: false });
   }
 
   function handleInstagram() {
