@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Veil Shield — No Reels & No Shorts (iOS Safari)
 // @namespace    com.veil.anti-doomscroll
-// @version      3.5.1
+// @version      3.6
 // @description  Deterministic Reels & Shorts blocker for iOS Mobile Safari on iPhone.
 //               Preserves DMs, Search, Creator Profiles, and long-form YouTube.
 //               Anchored exclusively on stable href / aria-label / custom-element selectors.
@@ -44,6 +44,13 @@
  * every scrollable ancestor of the on-screen fullscreen <video>, re-applied
  * each sweep; a capture-phase scroll listener snaps it back + blackouts if it
  * moves anyway. Detection relaxed to >=1 on-screen fullscreen video.
+ *
+ * v3.6: YouTube, verified in the simulator harness (harness/). The m.youtube.com
+ * Shorts pivot tab was never hidden — it has no <a> and no tab-identifier;
+ * now matched by its semantic .pivot-shorts class. hideShortsTab /
+ * hideShortsShelves are honoured (CSS gated on <html> attributes; they were
+ * ignored). A bare /shorts now goes home instead of failing open. History
+ * hooks moved behind the ARMED gate — a paused shield no longer acts on SPA nav.
  * ============================================================================
  *
  * Changes from v3.0 (post-review):
@@ -82,6 +89,7 @@
 (function () {
   'use strict';
 
+  const VERSION = '3.6';
   const DEBUG = false;
   const log = (...a) => { if (DEBUG) try { console.log('[Veil]', ...a); } catch (e) {} };
 
@@ -248,32 +256,43 @@ html[data-veil-page="explore_grid"][data-veil-explore="blackout"] main {
 
 
 /* ═══════════════════════ YOUTUBE ═══════════════════════ */
+/* Gated by html[data-veil-shorts-tab] / [data-veil-shorts-shelves], which §6
+   sets from CONFIG.youtube.hideShortsTab / hideShortsShelves. */
 
-/* 1. Shorts tab + guide/sidebar entries */
-ytm-pivot-bar-item-renderer:has(a[href="/shorts"]),
-ytm-pivot-bar-item-renderer[tab-identifier="FEshorts"],
-ytd-guide-entry-renderer:has(a[title="Shorts"]),
-ytd-guide-entry-renderer:has(a[href="/shorts"]),
-ytd-mini-guide-entry-renderer:has(a[title="Shorts"]) {
+/* 1. Shorts tab + guide/sidebar entries.
+      m.youtube.com's pivot item has no link and no tab-identifier (seen live,
+      v3.6); its only stable hook is the semantic (non-minified) .pivot-shorts. */
+html[data-veil-shorts-tab="hide"] :is(
+  ytm-pivot-bar-item-renderer:has(.pivot-shorts),
+  ytm-pivot-bar-item-renderer:has(a[href="/shorts"]),
+  ytm-pivot-bar-item-renderer[tab-identifier="FEshorts"],
+  ytd-guide-entry-renderer:has(a[title="Shorts"]),
+  ytd-guide-entry-renderer:has(a[href="/shorts"]),
+  ytd-mini-guide-entry-renderer:has(a[title="Shorts"])
+) {
   display: none !important;
 }
 
 /* 2. Shorts shelves in any feed (home / subs / search / channel) */
-ytm-reel-shelf-renderer,
-ytm-shorts-lockup-view-model,
-ytm-shorts-lockup-view-model-v2,
-ytd-reel-shelf-renderer,
-ytd-rich-shelf-renderer[is-shorts],
-ytm-rich-section-renderer:has(a[href^="/shorts/"]),
-ytm-item-section-renderer:has(ytm-reel-shelf-renderer),
-grid-shelf-view-model:has(a[href^="/shorts/"]) {
+html[data-veil-shorts-shelves="hide"] :is(
+  ytm-reel-shelf-renderer,
+  ytm-shorts-lockup-view-model,
+  ytm-shorts-lockup-view-model-v2,
+  ytd-reel-shelf-renderer,
+  ytd-rich-shelf-renderer[is-shorts],
+  ytm-rich-section-renderer:has(a[href^="/shorts/"]),
+  ytm-item-section-renderer:has(ytm-reel-shelf-renderer),
+  grid-shelf-view-model:has(a[href^="/shorts/"])
+) {
   display: none !important;
 }
 
 /* 3. Individual Shorts entries scattered in search results / lists */
-ytm-video-with-context-renderer:has(a[href^="/shorts/"]),
-ytd-video-renderer:has(a[href^="/shorts/"]),
-a[href^="/shorts/"] {
+html[data-veil-shorts-shelves="hide"] :is(
+  ytm-video-with-context-renderer:has(a[href^="/shorts/"]),
+  ytd-video-renderer:has(a[href^="/shorts/"]),
+  a[href^="/shorts/"]
+) {
   display: none !important;
 }
 
@@ -434,10 +453,14 @@ a[href^="/shorts/"] {
 
   function syncPageAttr() {
     const root = document.documentElement;
+    root.setAttribute('data-veil-v', VERSION);
     root.setAttribute('data-veil-platform', platform);
     root.setAttribute('data-veil-page', state.pageType || 'unknown');
     if (platform === 'instagram') {
       root.setAttribute('data-veil-explore', CONFIG.instagram.exploreGridMode);
+    } else if (platform === 'youtube') {
+      root.setAttribute('data-veil-shorts-tab', CONFIG.youtube.hideShortsTab ? 'hide' : 'show');
+      root.setAttribute('data-veil-shorts-shelves', CONFIG.youtube.hideShortsShelves ? 'hide' : 'show');
     }
   }
 
@@ -448,6 +471,8 @@ a[href^="/shorts/"] {
   // /shorts/{id} → /watch?v={id}. Every Short is the same video object, so this
   // opens it in the standard player with no vertical feed, keeps shared links
   // working, and fails safe: a rotted selector just means you land in /watch.
+  // A bare /shorts is the feed's own entry point with no single video to keep,
+  // so it goes home instead (Invariant 3 — was left open before v3.6).
 
   function extractShortId(path) {
     if (!path.startsWith('/shorts/')) return null;
@@ -456,9 +481,9 @@ a[href^="/shorts/"] {
   }
 
   function handleYouTube() {
-    if (!CONFIG.youtube.blockShortsPlayer) return;
+    if (!CONFIG.youtube.blockShortsPlayer || state.pageType !== 'yt_shorts') return;
     const id = extractShortId(location.pathname);
-    if (id) location.replace(location.origin + '/watch?v=' + id);
+    location.replace(location.origin + (id ? '/watch?v=' + id : '/'));
   }
 
   function initYouTubeClickInterceptor() {
@@ -535,7 +560,6 @@ a[href^="/shorts/"] {
   function stampDbg() {
     try {
       const de = document.documentElement;
-      de.setAttribute('data-veil-v', '3.5.1');
       de.setAttribute('data-veil-dbg',
         'armed=' + (ARMED ? 1 : 0) +
         ' page=' + state.pageType +
@@ -690,6 +714,7 @@ a[href^="/shorts/"] {
 
   function sweep() {
     if (platform === 'youtube') {
+      if (!CONFIG.youtube.hideShortsShelves) return;
       if (state.pageType === 'yt_watch' || state.pageType === 'yt_channel') return;
       document.querySelectorAll(
         'ytm-reel-shelf-renderer, ytm-shorts-lockup-view-model, ' +
@@ -720,7 +745,9 @@ a[href^="/shorts/"] {
     else if (platform === 'instagram') handleInstagram();
   }
 
-  (function installHistoryHooks() {
+  // Installed from boot(), behind the ARMED gate: before v3.6 this ran at load,
+  // so a paused shield still redirected Shorts and blacked out /reels/ on SPA nav.
+  function installHistoryHooks() {
     const _push = history.pushState;
     history.pushState = function () {
       const r = _push.apply(this, arguments);
@@ -735,7 +762,7 @@ a[href^="/shorts/"] {
     };
     window.addEventListener('popstate', evaluate);
     window.addEventListener('hashchange', evaluate);
-  })();
+  }
 
   let sweepTimer = null;
   const observer = new MutationObserver(() => {
@@ -754,6 +781,7 @@ a[href^="/shorts/"] {
     if (!ARMED) { log('shield paused for', platform, '— nothing injected'); return; }
 
     injectCSS();
+    installHistoryHooks();
     state.pageType = detectPageType();
     syncPageAttr();
 
@@ -785,9 +813,9 @@ a[href^="/shorts/"] {
     Object.defineProperty(window, '__VEIL', {
       configurable: true,
       value: {
-        version: '3.5.1',
+        version: VERSION,
         status: () => ({
-          v: '3.5.1', armed: ARMED, page: state.pageType,
+          v: VERSION, armed: ARMED, page: state.pageType,
           isSharedReelActive: state.isSharedReelActive, dmReelArmed,
           pinned: document.querySelectorAll('[data-veil-pinned]').length,
           blacked: state.isBlackedOut,

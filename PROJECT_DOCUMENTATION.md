@@ -183,7 +183,7 @@ The following files are from the abandoned native injection approach and are kep
 
 | Feature | Behavior | Selector Strategy |
 | :--- | :--- | :--- |
-| Shorts Tab | **Hidden** | `ytm-pivot-bar-item-renderer:has(div.pivot-shorts)` |
+| Shorts Tab | **Hidden** (`hideShortsTab`) | `ytm-pivot-bar-item-renderer:has(.pivot-shorts)` |
 | Shorts Shelves | **Hidden** | `ytm-reel-shelf-renderer`, custom elements |
 | Shorts URLs | **Redirected** to `/watch?v={id}` | `location.replace()` |
 | Shorts Link Clicks | **Intercepted** before SPA router | Capture-phase click listener |
